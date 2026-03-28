@@ -16,7 +16,7 @@
 \usepackage{natbib}
 \usepackage{doi}
 
-\title{A template for the \emph{arxiv} style}
+\title{Analyse Préliminaire - IFT-7201}
 
 % Here you can change the date presented in the paper title
 %\date{September 9, 1985}
@@ -28,31 +28,23 @@
 \uniqueAffiliationtrue
 
 \ifuniqueAffiliation % Standard variant of author block
-\author{ \href{https://orcid.org/0000-0000-0000-0000}{\includegraphics[scale=0.06]{orcid.pdf}\hspace{1mm}David S.~Hippocampus}\thanks{Use footnote for providing further
+\author{ %\href{https://orcid.org/0000-0000-0000-0000}
+{Ibrahim R. HADJ-ARAB}\thanks{Use footnote for providing further
 		information about author (webpage, alternative
 		address)---\emph{not} for acknowledging funding agencies.} \\
-	Department of Computer Science\\
-	Cranberry-Lemon University\\
-	Pittsburgh, PA 15213 \\
-	\texttt{hippo@cs.cranberry-lemon.edu} \\
+	Faculté des sciences et de génie\\
+	Université Laval\\
+	Québec, QC G1V 0A6 \\
+	\texttt{ibrahim-rabah.hadj-arab.1@ulaval.ca} \\
 	%% examples of more authors
 	\And
-	\href{https://orcid.org/0000-0000-0000-0000}{\includegraphics[scale=0.06]{orcid.pdf}\hspace{1mm}Elias D.~Striatum} \\
-	Department of Electrical Engineering\\
-	Mount-Sheikh University\\
-	Santa Narimana, Levand \\
-	\texttt{stariate@ee.mount-sheikh.edu} \\
+	%\href{https://orcid.org/0000-0000-0000-0000}
+    {Khalil EN NOUAARY} \\
+	Faculté des sciences et de génie\\
+	Université Laval\\
+	Québec, QC G1V 0A6 \\
+	\texttt{khalil.en-nouaary.1@ulaval.ca} \\
 	%% \AND
-	%% Coauthor \\
-	%% Affiliation \\
-	%% Address \\
-	%% \texttt{email} \\
-	%% \And
-	%% Coauthor \\
-	%% Affiliation \\
-	%% Address \\
-	%% \texttt{email} \\
-	%% \And
 	%% Coauthor \\
 	%% Affiliation \\
 	%% Address \\
@@ -66,13 +58,15 @@
 % box is needed for correct spacing with authblk
 \newbox{\orcid}\sbox{\orcid}{\includegraphics[scale=0.06]{orcid.pdf}} 
 \author[1]{%
-	\href{https://orcid.org/0000-0000-0000-0000}{\usebox{\orcid}\hspace{1mm}David S.~Hippocampus\thanks{\texttt{hippo@cs.cranberry-lemon.edu}}}%
+	%\href{https://orcid.org/0000-0000-0000-0000}
+    {\usebox{\orcid}\hspace{1mm}Ibrahim R. HADJ-ARAB\thanks{\texttt{brahim-rabah.hadj-arab.1@ulaval.ca}}}%
 }
 \author[1,2]{%
-	\href{https://orcid.org/0000-0000-0000-0000}{\usebox{\orcid}\hspace{1mm}Elias D.~Striatum\thanks{\texttt{stariate@ee.mount-sheikh.edu}}}%
+	%\href{https://orcid.org/0000-0000-0000-0000}%
+    {\usebox{\orcid}\hspace{1mm}Khalil EN NOUAARY\thanks{\texttt{khalil.en-nouaary.1@ulaval.ca}}}%
 }
-\affil[1]{Department of Computer Science, Cranberry-Lemon University, Pittsburgh, PA 15213}
-\affil[2]{Department of Electrical Engineering, Mount-Sheikh University, Santa Narimana, Levand}
+\affil[1]{Faculté des sciences et de génie, Université Laval, Québec, QC G1V 0A6}
+\affil[2]{Faculté des sciences et de génie, Université Laval, Santa Québec, QC G1V 0A6}
 \fi
 
 % Uncomment to override  the `A preprint' in the header

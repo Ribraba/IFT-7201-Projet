@@ -4,7 +4,9 @@ from gymnasium import Wrapper
 
 # Cas 1 : 4x4 déterministe (référence sans stochasticité)
 # Cas 2 : 4x4 stochastique (même grille, isole l'effet de is_slippery)
-# Cas 3 : 6x6 stochastique avec trous concentrés autour des chemins
+# Cas 3 : 6x6 stochastique, rangée de trous créant un obstacle partiel (inspiré du cliff walking)
+#   - chemin court risqué vs chemin long sûr
+#   - version initiale trop difficile (voir dossier archive_hard_v1)
 MAPS = {
     "easy": {
         "desc": ["SFFH", "FFFH", "FFFH", "FFGH"],
@@ -15,7 +17,7 @@ MAPS = {
         "is_slippery": True,
     },
     "hard": {
-        "desc": ["SFFFFF", "HFHFFF", "FFHFHF", "FHFFHF", "FFHFFF", "FFFFHG"],
+        "desc": ["SFFFFF", "FFFFFF", "HHHHFF", "FFFFFF", "FFFFFF", "FFFFFG"],
         "is_slippery": True,
     },
 }
