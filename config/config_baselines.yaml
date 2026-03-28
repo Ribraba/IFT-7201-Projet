@@ -1,0 +1,102 @@
+# ---------------------------------------------------------------------------
+# 6 expériences = 2 algorithmes × 3 environnements
+# Chaque expérience est répétée n_runs fois avec des seeds différentes
+# (seed = seed_base + run_id) pour produire des intervalles de confiance.
+#
+# Hyperparamètres communs aux deux algorithmes (pour une comparaison équitable) :
+#   gamma    : 0.99  — actualisation élevée, l'agent valorise les récompenses lointaines
+#   lr       : 0.5   — taux d'apprentissage initial (décroît vers lr_min=0.01)
+#   episodes : 20000 — nombre d'épisodes d'entraînement
+#   eps_start: 1.0   — exploration totale au début
+#   eps_min  : 0.05  — exploration résiduelle minimale
+#   eps_decay: 0.9995 — epsilon ≈ eps_min après ~6000 épisodes
+#   lr_decay : 0.9995 — lr  ≈ lr_min  après ~6000 épisodes
+# ---------------------------------------------------------------------------
+
+# ---- Q-learning -------------------------------------------------------
+
+- name: "qlearning_easy"
+  algo: "qlearning"
+  env: "easy"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
+
+- name: "qlearning_medium"
+  algo: "qlearning"
+  env: "medium"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
+
+- name: "qlearning_hard"
+  algo: "qlearning"
+  env: "hard"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
+
+# ---- SARSA ------------------------------------------------------------
+
+- name: "sarsa_easy"
+  algo: "sarsa"
+  env: "easy"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
+
+- name: "sarsa_medium"
+  algo: "sarsa"
+  env: "medium"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
+
+- name: "sarsa_hard"
+  algo: "sarsa"
+  env: "hard"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
