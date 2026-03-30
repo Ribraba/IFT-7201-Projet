@@ -10,12 +10,13 @@
 ├── src/
 │   ├── agents.py               # Q-learning et SARSA
 │   ├── envs.py                 # Environnements (Facile, Moyen, Difficile)
-│   └── evaluate.py             # Évaluation greedy (succès, chutes, états dangereux)
+│   ├── evaluate.py             # Évaluation greedy + analyse Dijkstra (chemins sécurisés)
+│   └── plots.py                # Figures (courbes, barres, heatmap, boîtes à moustaches)
 ├── run_experiments.py          # Script principal d'entraînement
 ├── FrozenLakeProject.ipynb     # Vitrine : visualisation des environnements et résultats
 ├── results/                    # Résultats JSON par expérience/run (généré)
 ├── figures/                    # Figures PNG (générées)
-└── LaTeX V1/                   # Rapport LaTeX
+└── LaTeX V3/                   # Rapport LaTeX (analyse préliminaire finale)
 ```
 
 ## Installation
