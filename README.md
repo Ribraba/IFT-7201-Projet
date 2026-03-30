@@ -39,9 +39,12 @@ Les résultats sont sauvegardés dans `results/<nom_experience>/run_<i>.json`. L
 
 Ouvrir `FrozenLakeProject.ipynb` dans Jupyter. Le notebook charge les résultats depuis `results/` et génère toutes les figures dans `figures/`.
 
-## Notes
+## Archives
 
-`results/archive_hard_v1/` contient les résultats d'une première version de la carte Difficile (taux de chutes > 90% pour les deux stratégies, rendant la comparaison non informative). La carte a été redessinée en s'inspirant du *cliff walking* pour obtenir des comportements distincts entre Q-learning et SARSA.
+| Dossier | Contenu |
+|---|---|
+| `results/archive_hard_v1/` | Première version de la carte Difficile (falaise trop large, taux de chutes > 90% pour les deux algorithmes — comparaison non informative). Redessinée en s'inspirant du *cliff walking* Sutton & Barto. |
+| `results/archive_khalil_maps/` | Cartes alternatives testées avec les mêmes hyperparamètres (20 000 épisodes, 10 runs, pas de cherry-picking). Résultat : Δ succès = 0.4% et Δ chemin sûr = 1.6% sur la carte Difficile, contre respectivement 12.2% et 10.3% pour les cartes principales. Cartes principales conservées. |
 
 ## Paramètres expérimentaux
 
