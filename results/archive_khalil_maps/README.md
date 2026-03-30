@@ -1,6 +1,6 @@
 # Archive — Cartes alternatives (branche second_version) testées avec l'entraînement principal
 
-Expériences réalisées le 2026-03-30 : cartes de la branche second_version + hyperparamètres du rapport principal (20 000 épisodes, 10 runs, pas de cherry-picking).
+Expériences réalisées : cartes de la branche second_version + hyperparamètres du rapport principal (20 000 épisodes, 10 runs, pas de cherry-picking).
 
 ## Cartes testées
 - **easy_k / medium_k** : 6×6, `["SFFFFG","FFHFHF","FFFGHF","FFHFHF","FFFFFH","FFFFFG"]`, 3 G, 6 trous
