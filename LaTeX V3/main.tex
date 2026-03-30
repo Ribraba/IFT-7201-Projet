@@ -16,6 +16,13 @@
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{subcaption}
+\usepackage{float}
+\setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
+\raggedbottom
 \usepackage{doi}
 
 \title{Analyse Préliminaire --- Apprentissage par renforcement sur \textit{FrozenLake}}
@@ -131,18 +138,16 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \item \textbf{Taux de chemins sécurisés à l'évaluation} : fraction des épisodes réussis dont la trajectoire chevauche à au moins 50\,\% le chemin optimal de sécurité, calculé par une variante de l'algorithme de Dijkstra~\citep{dijkstra1959} pénalisant les cases adjacentes à un trou. Quantifie la capacité de la politique finale à emprunter le détour sûr plutôt que le chemin court risqué.
 \end{itemize}
 
-
 \section{Résultats}
-
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
-  \begin{subfigure}[t]{0.49\linewidth}
+  \begin{subfigure}[t]{0.47\linewidth}
     \includegraphics[width=\linewidth]{../figures/training_easy.png}
     \caption{\textbf{Facile} --- Convergence vers 0\% de chutes dès $\approx\!2\,000$ épisodes. Q-learning converge légèrement plus vite grâce à ses mises à jour optimistes. Valide les implémentations en environnement déterministe.}
     \label{fig:train_easy}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.49\linewidth}
+  \begin{subfigure}[t]{0.47\linewidth}
     \includegraphics[width=\linewidth]{../figures/training_medium.png}
     \caption{\textbf{Moyen} --- La stochasticité fait bondir le taux de chutes initial à $\approx\!61\%$ (contre $\approx\!43\%$ en Facile). Le taux ne converge pas vers zéro : $\varepsilon_{\min}=5\%$ combiné aux glissades maintient un risque irréductible.}
     \label{fig:train_medium}
@@ -150,22 +155,21 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \caption{Courbes d'apprentissage --- cas Facile et Moyen. La bande colorée représente $\pm$ un écart-type sur 10 répétitions.}
   \label{fig:train_easy_medium}
 \end{figure}
-
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.5\linewidth]{../figures/training_hard.png}
+  \includegraphics[width=0.35\linewidth]{../figures/training_hard.png}
   \caption{\textbf{Difficile} --- Les deux stratégies démarrent à un taux de chutes similaire ($\approx\!97\%$), mais divergent en fin d'apprentissage, reproduisant le phénomène de \textit{cliff walking}~\citep{sutton2018} : SARSA converge vers $14{,}9\%$ de chutes contre $20{,}6\%$ pour Q-learning. La mise à jour \textit{on-policy} intègre le coût de l'exploration et pousse l'agent vers le détour sûr.}
   \label{fig:train_hard}
 \end{figure}
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
-  \begin{subfigure}[t]{0.49\linewidth}
+  \begin{subfigure}[t]{0.46\linewidth}
     \includegraphics[width=\linewidth]{../figures/overview_success_rate.png}
     \caption{Taux de succès à l'évaluation (politique greedy, 500 épisodes). Les échecs sont exclusivement des boucles (dépassements de la limite de pas) — le taux de chutes est nul.}
     \label{fig:overview}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.49\linewidth}
+  \begin{subfigure}[t]{0.46\linewidth}
     \includegraphics[width=\linewidth]{../figures/danger_boxplot.png}
     \caption{Distribution des situations dangereuses par épisode. Sur le cas Difficile, SARSA affiche une médiane plus basse et une variance moindre.}
     \label{fig:boxplot}
@@ -176,7 +180,7 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
 
 Le Tableau~\ref{tab:eval} synthétise les indicateurs d'évaluation. Sur le cas Difficile, l'écart de boucles est frappant : Q-learning accumule $15{,}3\% \pm 7{,}7\%$ de boucles contre seulement $3{,}1\% \pm 1{,}7\%$ pour SARSA. SARSA réduit également la proximité aux trous ($27{,}4\%$ contre $32{,}8\%$) et emprunte davantage le chemin sûr identifié par Dijkstra~\citep{dijkstra1959} ($66{,}3\% \pm 2{,}5\%$ contre $63{,}7\% \pm 4{,}2\%$), avec une variance moindre confirmant une plus grande cohérence.
 
-\begin{table}[ht]
+\begin{table}[H]
   \centering
   \caption{Indicateurs d'évaluation finale (politique greedy, 500 épisodes, moyenne $\pm$ écart-type, 10 répétitions). Chemin sûr : chevauchement $\geq 50\%$ avec le chemin Dijkstra (cas Difficile uniquement).}
   \label{tab:eval}
@@ -202,7 +206,7 @@ Le Tableau~\ref{tab:eval} synthétise les indicateurs d'évaluation. Sur le cas 
 
 En somme, Q-learning converge plus rapidement mais au prix d'une instabilité notable en environnement stochastique à obstacles groupés : davantage de boucles, une plus grande proximité aux trous et une moindre cohérence dans le choix du chemin sûr. SARSA, plus conservateur, s'avère mieux adapté aux contraintes de sécurité de ce problème. Ces observations soulignent les limites des stratégies sans mécanisme explicite d'évitement et motivent l'introduction d'une telle approche dans le rapport final.
 
-\clearpage
+\newpage
 \bibliographystyle{unsrtnat}
 \bibliography{references}
 
