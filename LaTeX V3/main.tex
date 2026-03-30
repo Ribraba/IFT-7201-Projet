@@ -161,7 +161,7 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \centering
   \begin{subfigure}[t]{0.49\linewidth}
     \includegraphics[width=\linewidth]{../figures/overview_success_rate.png}
-    \caption{Taux de succès à l'évaluation (politique greedy, 500 épisodes). Les échecs sont exclusivement des \textit{timeouts} — le taux de chutes est nul.}
+    \caption{Taux de succès à l'évaluation (politique greedy, 500 épisodes). Les échecs sont exclusivement des boucles (dépassements de la limite de pas) — le taux de chutes est nul.}
     \label{fig:overview}
   \end{subfigure}
   \hfill
@@ -174,11 +174,11 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \label{fig:eval_overview}
 \end{figure}
 
-Le Tableau~\ref{tab:eval} synthétise les indicateurs d'évaluation. Sur le cas Difficile, l'écart de boucles est frappant : Q-learning accumule $15{,}3\% \pm 7{,}7\%$ de \textit{timeouts} contre seulement $3{,}1\% \pm 1{,}7\%$ pour SARSA. SARSA réduit également la proximité aux trous ($27{,}4\%$ contre $32{,}8\%$) et emprunte davantage le chemin sûr identifié par Dijkstra~\citep{dijkstra1959} ($66{,}3\% \pm 2{,}5\%$ contre $63{,}7\% \pm 4{,}2\%$), avec une variance moindre confirmant une plus grande cohérence.
+Le Tableau~\ref{tab:eval} synthétise les indicateurs d'évaluation. Sur le cas Difficile, l'écart de boucles est frappant : Q-learning accumule $15{,}3\% \pm 7{,}7\%$ de boucles contre seulement $3{,}1\% \pm 1{,}7\%$ pour SARSA. SARSA réduit également la proximité aux trous ($27{,}4\%$ contre $32{,}8\%$) et emprunte davantage le chemin sûr identifié par Dijkstra~\citep{dijkstra1959} ($66{,}3\% \pm 2{,}5\%$ contre $63{,}7\% \pm 4{,}2\%$), avec une variance moindre confirmant une plus grande cohérence.
 
 \begin{table}[ht]
   \centering
-  \caption{Indicateurs d'évaluation finale (politique greedy, 500 épisodes, moyenne $\pm$ écart-type, 10 répétitions). Chemin sûr : overlap $\geq 50\%$ avec le chemin Dijkstra (cas Difficile uniquement).}
+  \caption{Indicateurs d'évaluation finale (politique greedy, 500 épisodes, moyenne $\pm$ écart-type, 10 répétitions). Chemin sûr : chevauchement $\geq 50\%$ avec le chemin Dijkstra (cas Difficile uniquement).}
   \label{tab:eval}
   \small
   \begin{tabular}{llccc}
@@ -200,7 +200,7 @@ Le Tableau~\ref{tab:eval} synthétise les indicateurs d'évaluation. Sur le cas 
   \end{tabular}
 \end{table}
 
-Ces résultats convergent : Q-learning converge plus rapidement mais adopte une politique moins stable en environnement stochastique à obstacles groupés, tandis que SARSA réduit les boucles, la proximité aux trous et préfère davantage le chemin sûr. Ces limitations motivent l'introduction d'un mécanisme de sécurité explicite dans le rapport final.
+En somme, Q-learning converge plus rapidement mais au prix d'une instabilité notable en environnement stochastique à obstacles groupés : davantage de boucles, une plus grande proximité aux trous et une moindre cohérence dans le choix du chemin sûr. SARSA, plus conservateur, s'avère mieux adapté aux contraintes de sécurité de ce problème. Ces observations soulignent les limites des stratégies sans mécanisme explicite d'évitement et motivent l'introduction d'une telle approche dans le rapport final.
 
 \clearpage
 \bibliographystyle{unsrtnat}
