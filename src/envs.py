@@ -27,8 +27,6 @@ MAPS = {
     # ---------------------------------------------------------------------------
     # Cartes Khalil (branche second_version) — testées avec l'entraînement Ibrahim
     # ---------------------------------------------------------------------------
-    # easy_k / medium_k : 6×6, 3 objectifs stratégiques, 6 trous répartis
-    # hard_k            : 6×6, 1 objectif central entouré de trous, 9 trous
     "easy_k": {
         "desc": ["SFFFFG", "FFHFHF", "FFFGHF", "FFHFHF", "FFFFFH", "FFFFFG"],
         "is_slippery": False,
