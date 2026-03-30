@@ -141,6 +141,57 @@ def plot_evaluation_results(experiments, save_dir="figures"):
         print(f"Sauvegardé : {path}")
 
 
+def plot_danger_boxplot(experiments, save_dir="figures"):
+    """Boîtes à moustaches des situations dangereuses par épisode — Q-learning vs SARSA.
+    Exclut le cas Facile (déterministe, variance nulle, peu informatif)."""
+    os.makedirs(save_dir, exist_ok=True)
+
+    env_names  = [e for e in sorted({exp.split("_", 1)[1] for exp in experiments})
+                  if e != "easy"]
+    env_labels = {"medium": "Moyen", "hard": "Difficile"}
+
+    fig, axes = plt.subplots(1, len(env_names), figsize=(4 * len(env_names), 5), sharey=False)
+    if len(env_names) == 1:
+        axes = [axes]
+
+    fig.suptitle("Distribution des situations dangereuses par épisode (évaluation)",
+                 fontsize=12, fontweight="bold")
+
+    for ax, env_name in zip(axes, env_names):
+        data, colors, labels = [], [], []
+        for algo in ["qlearning", "sarsa"]:
+            key = f"{algo}_{env_name}"
+            if key not in experiments:
+                continue
+            all_steps = []
+            for e in experiments[key]["evaluation"]:
+                all_steps.extend(e.get("episodes_danger_steps", []))
+            if all_steps:
+                data.append(all_steps)
+                colors.append(ALGO_COLOR[algo])
+                labels.append(ALGO_LABEL[algo])
+
+        bp = ax.boxplot(data, patch_artist=True, widths=0.4,
+                        medianprops={"color": "white", "linewidth": 2})
+        for patch, color in zip(bp["boxes"], colors):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.8)
+        for element in ["whiskers", "caps", "fliers"]:
+            for item in bp[element]:
+                item.set_color(COLORS[3])
+
+        ax.set_xticks([1, 2])
+        ax.set_xticklabels(labels, fontsize=10)
+        ax.set_title(env_labels.get(env_name, env_name), fontsize=11)
+        ax.set_ylabel("Situations dangereuses / épisode")
+
+    plt.tight_layout()
+    path = os.path.join(save_dir, "danger_boxplot.png")
+    plt.savefig(path, dpi=150)
+    plt.close()
+    print(f"Sauvegardé : {path}")
+
+
 def plot_overview(experiments, save_dir="figures"):
     os.makedirs(save_dir, exist_ok=True)
 

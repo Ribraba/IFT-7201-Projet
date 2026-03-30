@@ -7,7 +7,7 @@ import yaml
 
 from src.envs    import make_env
 from src.agents  import q_learning, sarsa
-from src.evaluate import evaluate_agent
+from src.evaluate import evaluate_agent, evaluate_safe_path_rate
 
 
 ALGO_FN = {"qlearning": q_learning, "sarsa": sarsa}
@@ -35,6 +35,10 @@ def run_single(exp, run_id):
         lr_decay  = exp["lr_decay"],
     )
 
+    eval_result = evaluate_agent(env, Q, n_episodes=500)
+    if exp["env"] == "hard":
+        eval_result["safe_path_rate"] = evaluate_safe_path_rate(env, Q, n_episodes=500)
+
     return {
         "experiment":  exp["name"],
         "algo":        exp["algo"],
@@ -45,7 +49,7 @@ def run_single(exp, run_id):
                         ["gamma", "lr", "episodes", "eps_start",
                          "eps_min", "eps_decay", "lr_min", "lr_decay"]},
         "training":    history,
-        "evaluation":  evaluate_agent(env, Q, n_episodes=500),
+        "evaluation":  eval_result,
     }
 
 
