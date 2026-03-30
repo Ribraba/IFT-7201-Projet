@@ -9,6 +9,7 @@
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{nicefrac}
@@ -99,7 +100,7 @@ Le Tableau~\ref{tab:configs} et la Figure~\ref{fig:maps} présentent les trois c
 
 \section{Stratégies considérées}
 
-Deux stratégies de différence temporelle (TD) sont sélectionnées comme baselines. Il s'agit de méthodes standard ne disposant d'aucun mécanisme conçu explicitement pour éviter les situations dangereuses, ce qui permet de mesurer la limite inférieure de sécurité que tout mécanisme futur devra dépasser.
+Deux stratégies de différence temporelle (TD) sont sélectionnées comme baselines : Q-learning et SARSA. Ces méthodes ne disposent d'aucun mécanisme conçu explicitement pour éviter les situations dangereuses, ce qui permet d'établir une limite de référence que toute stratégie de sécurité ultérieure devra dépasser. Le choix de méthodes tabulaires (plutôt que DQN~\citep{mnih2015} ou PPO) est justifié par la taille réduite de l'espace d'états ($4\times4 = 16$ et $6\times6 = 36$ états) : les méthodes tabulaires convergent vers la solution exacte sans approximation de fonction, ce qui garantit que les différences observées reflètent bien les propriétés intrinsèques des algorithmes. De plus, Q-learning et SARSA forment la paire canonique \textit{off-policy} / \textit{on-policy} dont les comportements divergents face aux obstacles sont directement prédits par la théorie~\citep{sutton2018}.
 
 \textbf{Q-learning}~\citep{watkins1992} est une méthode \textit{off-policy} dont la règle de mise à jour repose sur la valeur maximale de l'état suivant :
 \begin{equation}
@@ -122,11 +123,12 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
 
 \textbf{Paramètres expérimentaux.} Chaque configuration est entraînée sur 20\,000 épisodes, avec un maximum de 200 pas par épisode. Les expériences sont répétées avec $n=10$ graines indépendantes (graines 0 à 9) pour produire des intervalles de confiance (moyenne $\pm$ écart-type). L'évaluation finale utilise la politique greedy ($\varepsilon=0$) sur 500 épisodes.
 
-\textbf{Indicateurs de performance.} L'étude vise à évaluer la sécurité \emph{durant} l'apprentissage et non uniquement sur la politique finale. Trois indicateurs sont mesurés :
+\textbf{Indicateurs de performance.} L'étude vise à évaluer la sécurité \emph{durant} l'apprentissage et non uniquement sur la politique finale. Quatre indicateurs sont mesurés :
 \begin{itemize}
   \item \textbf{Taux de chutes durant l'entraînement} : fraction d'épisodes terminés dans un trou (lissé sur 500 épisodes). Mesure la sécurité au cours de l'apprentissage.
   \item \textbf{Récompense cumulée durant l'entraînement} : indicateur de convergence de la politique.
   \item \textbf{Taux d'états dangereux à l'évaluation} : fraction de pas de temps passés dans une case adjacente à un trou lors de l'évaluation greedy. Quantifie le risque de proximité avec les obstacles de la politique finale.
+  \item \textbf{Taux de chemins sécurisés à l'évaluation} : fraction des épisodes réussis dont la trajectoire chevauche à au moins 50\,\% le chemin optimal de sécurité, calculé par une variante de l'algorithme de Dijkstra~\citep{dijkstra1959} pénalisant les cases adjacentes à un trou. Quantifie la capacité de la politique finale à emprunter le détour sûr plutôt que le chemin court risqué.
 \end{itemize}
 
 
@@ -136,13 +138,13 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \centering
   \begin{subfigure}[t]{0.49\linewidth}
     \includegraphics[width=\linewidth]{../figures/training_easy.png}
-    \caption{\textbf{Facile} --- Convergence vers 0\% de chutes dès $\approx\!3\,000$ épisodes. Q-learning converge légèrement plus vite grâce à ses mises à jour optimistes. Valide les implémentations en environnement déterministe.}
+    \caption{\textbf{Facile} --- Convergence vers 0\% de chutes dès $\approx\!2\,000$ épisodes. Q-learning converge légèrement plus vite grâce à ses mises à jour optimistes. Valide les implémentations en environnement déterministe.}
     \label{fig:train_easy}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.49\linewidth}
     \includegraphics[width=\linewidth]{../figures/training_medium.png}
-    \caption{\textbf{Moyen} --- La stochasticité fait bondir le taux de chutes initial à $\approx\!50\%$ (contre $\approx\!16\%$ en Facile). Le taux ne converge pas vers zéro : $\varepsilon_{\min}=5\%$ combiné aux glissades maintient un risque irréductible.}
+    \caption{\textbf{Moyen} --- La stochasticité fait bondir le taux de chutes initial à $\approx\!61\%$ (contre $\approx\!43\%$ en Facile). Le taux ne converge pas vers zéro : $\varepsilon_{\min}=5\%$ combiné aux glissades maintient un risque irréductible.}
     \label{fig:train_medium}
   \end{subfigure}
   \caption{Courbes d'apprentissage --- cas Facile et Moyen. La bande colorée représente $\pm$ un écart-type sur 10 répétitions.}
@@ -151,37 +153,56 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.7\linewidth]{../figures/training_hard.png}
-  \caption{\textbf{Difficile} --- Les courbes se croisent, reproduisant le phénomène de \textit{cliff walking}~\citep{sutton2018}. SARSA chute davantage en début d'apprentissage ($94{,}1\%$ vs $91{,}3\%$) mais converge vers un taux de chutes plus faible ($15{,}2\%$ vs $19{,}9\%$) : la mise à jour \textit{on-policy} intègre le coût de l'exploration et pousse l'agent vers le détour sûr.}
+  \includegraphics[width=0.5\linewidth]{../figures/training_hard.png}
+  \caption{\textbf{Difficile} --- Les deux stratégies démarrent à un taux de chutes similaire ($\approx\!97\%$), mais divergent en fin d'apprentissage, reproduisant le phénomène de \textit{cliff walking}~\citep{sutton2018} : SARSA converge vers $14{,}9\%$ de chutes contre $20{,}6\%$ pour Q-learning. La mise à jour \textit{on-policy} intègre le coût de l'exploration et pousse l'agent vers le détour sûr.}
   \label{fig:train_hard}
 \end{figure}
-
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.7\linewidth]{../figures/overview_success_rate.png}
-  \caption{Taux de succès à l'évaluation finale (politique greedy, 500 épisodes). Le taux de chutes est nul pour les deux stratégies : les échecs correspondent à des \textit{timeouts}. La comparaison de sécurité pertinente reste le taux de chutes \emph{durant} l'entraînement (Fig.~\ref{fig:train_easy_medium}--\ref{fig:train_hard}).}
-  \label{fig:overview}
+  \begin{subfigure}[t]{0.49\linewidth}
+    \includegraphics[width=\linewidth]{../figures/overview_success_rate.png}
+    \caption{Taux de succès à l'évaluation (politique greedy, 500 épisodes). Les échecs sont exclusivement des \textit{timeouts} — le taux de chutes est nul.}
+    \label{fig:overview}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.49\linewidth}
+    \includegraphics[width=\linewidth]{../figures/danger_boxplot.png}
+    \caption{Distribution des situations dangereuses par épisode. Sur le cas Difficile, SARSA affiche une médiane plus basse et une variance moindre.}
+    \label{fig:boxplot}
+  \end{subfigure}
+  \caption{Évaluation finale --- comparaison Q-learning vs SARSA.}
+  \label{fig:eval_overview}
 \end{figure}
 
-Le Tableau~\ref{tab:danger} présente le taux d'états dangereux à l'évaluation. Sur le cas Difficile, SARSA réduit également la proximité aux trous ($27{,}4\% \pm 1{,}4\%$ contre $32{,}8\% \pm 1{,}1\%$ pour Q-learning), confirmant que son comportement plus conservateur se traduit par une politique finale qui s'écarte davantage des obstacles.
+Le Tableau~\ref{tab:eval} synthétise les indicateurs d'évaluation. Sur le cas Difficile, l'écart de boucles est frappant : Q-learning accumule $15{,}3\% \pm 7{,}7\%$ de \textit{timeouts} contre seulement $3{,}1\% \pm 1{,}7\%$ pour SARSA. SARSA réduit également la proximité aux trous ($27{,}4\%$ contre $32{,}8\%$) et emprunte davantage le chemin sûr identifié par Dijkstra~\citep{dijkstra1959} ($66{,}3\% \pm 2{,}5\%$ contre $63{,}7\% \pm 4{,}2\%$), avec une variance moindre confirmant une plus grande cohérence.
 
 \begin{table}[ht]
   \centering
-  \caption{Taux d'états dangereux à l'évaluation (moyenne $\pm$ écart-type, 10 répétitions).}
-  \label{tab:danger}
+  \caption{Indicateurs d'évaluation finale (politique greedy, 500 épisodes, moyenne $\pm$ écart-type, 10 répétitions). Chemin sûr : overlap $\geq 50\%$ avec le chemin Dijkstra (cas Difficile uniquement).}
+  \label{tab:eval}
   \small
-  \begin{tabular}{lccc}
+  \begin{tabular}{llccc}
     \toprule
-    & \textbf{Facile} & \textbf{Moyen} & \textbf{Difficile} \\
+    & & \textbf{Facile} & \textbf{Moyen} & \textbf{Difficile} \\
     \midrule
-    Q-learning & $20{,}0 \pm 0{,}0\%$ & $28{,}5 \pm 1{,}6\%$ & $32{,}8 \pm 1{,}1\%$ \\
-    SARSA      & $20{,}0 \pm 0{,}0\%$ & $27{,}7 \pm 0{,}6\%$ & $27{,}4 \pm 1{,}4\%$ \\
+    \multirow{4}{*}{Q-learning}
+      & Succès      & $100{,}0 \pm 0{,}0\%$ & $99{,}7 \pm 0{,}3\%$ & $84{,}7 \pm 7{,}7\%$ \\
+      & Boucles     & $0{,}0 \pm 0{,}0\%$   & $0{,}3 \pm 0{,}3\%$  & $15{,}3 \pm 7{,}7\%$ \\
+      & Danger      & $20{,}0 \pm 0{,}0\%$  & $28{,}5 \pm 1{,}6\%$ & $32{,}8 \pm 1{,}1\%$ \\
+      & Chemin sûr  & ---                   & ---                  & $63{,}7 \pm 4{,}2\%$ \\
+    \midrule
+    \multirow{4}{*}{SARSA}
+      & Succès      & $100{,}0 \pm 0{,}0\%$ & $99{,}7 \pm 0{,}2\%$ & $96{,}9 \pm 1{,}7\%$ \\
+      & Boucles     & $0{,}0 \pm 0{,}0\%$   & $0{,}3 \pm 0{,}2\%$  & $3{,}1 \pm 1{,}7\%$  \\
+      & Danger      & $20{,}0 \pm 0{,}0\%$  & $27{,}7 \pm 0{,}6\%$ & $27{,}4 \pm 1{,}4\%$ \\
+      & Chemin sûr  & ---                   & ---                  & $66{,}3 \pm 2{,}5\%$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-Ces résultats montrent que Q-learning converge plus rapidement mais adopte une politique plus risquée en environnement stochastique avec obstacles groupés, tandis que SARSA, plus conservateur, réduit davantage les chutes et la proximité aux trous une fois l'exploration amortie. Ces limitations des stratégies sans mécanisme de sécurité explicite motivent l'introduction d'une telle stratégie dans le rapport final.
+Ces résultats convergent : Q-learning converge plus rapidement mais adopte une politique moins stable en environnement stochastique à obstacles groupés, tandis que SARSA réduit les boucles, la proximité aux trous et préfère davantage le chemin sûr. Ces limitations motivent l'introduction d'un mécanisme de sécurité explicite dans le rapport final.
 
+\clearpage
 \bibliographystyle{unsrtnat}
 \bibliography{references}
 
