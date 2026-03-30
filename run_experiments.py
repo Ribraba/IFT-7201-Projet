@@ -36,7 +36,7 @@ def run_single(exp, run_id):
     )
 
     eval_result = evaluate_agent(env, Q, n_episodes=500)
-    if exp["env"] == "hard":
+    if "hard" in exp["env"]:
         eval_result["safe_path_rate"] = evaluate_safe_path_rate(env, Q, n_episodes=500)
 
     return {
@@ -50,6 +50,7 @@ def run_single(exp, run_id):
                          "eps_min", "eps_decay", "lr_min", "lr_decay"]},
         "training":    history,
         "evaluation":  eval_result,
+        "Q":           Q.tolist(),
     }
 
 

@@ -25,14 +25,14 @@ def q_learning(env, gamma, lr, episodes, seed=0,
     n_states  = env.observation_space.n
     n_actions = env.action_space.n
     Q = np.zeros((n_states, n_actions))
-    history = {"rewards": [], "falls": [], "steps": []}
+    history = {"rewards": [], "falls": [], "timeouts": [], "steps": []}
 
     for ep in range(episodes):
         eps  = max(eps_min, eps_start * (eps_decay ** ep))
         lr_t = max(lr_min,  lr        * (lr_decay  ** ep))
 
         state, _ = env.reset(seed=seed + ep)
-        total_reward, fell, steps, done = 0.0, False, 0, False
+        total_reward, fell, timed_out, steps, done = 0.0, False, False, 0, False
 
         while not done:
             action = epsilon_greedy(Q, state, eps, n_actions)
@@ -47,10 +47,13 @@ def q_learning(env, gamma, lr, episodes, seed=0,
             steps += 1
             if terminated and _fell(env, next_state):
                 fell = True
+            if truncated and not terminated:
+                timed_out = True
             state = next_state
 
         history["rewards"].append(total_reward)
         history["falls"].append(int(fell))
+        history["timeouts"].append(int(timed_out))
         history["steps"].append(steps)
 
     return Q, history
@@ -66,7 +69,7 @@ def sarsa(env, gamma, lr, episodes, seed=0,
     n_states  = env.observation_space.n
     n_actions = env.action_space.n
     Q = np.zeros((n_states, n_actions))
-    history = {"rewards": [], "falls": [], "steps": []}
+    history = {"rewards": [], "falls": [], "timeouts": [], "steps": []}
 
     for ep in range(episodes):
         eps  = max(eps_min, eps_start * (eps_decay ** ep))
@@ -74,7 +77,7 @@ def sarsa(env, gamma, lr, episodes, seed=0,
 
         state, _ = env.reset(seed=seed + ep)
         action = epsilon_greedy(Q, state, eps, n_actions)
-        total_reward, fell, steps, done = 0.0, False, 0, False
+        total_reward, fell, timed_out, steps, done = 0.0, False, False, 0, False
 
         while not done:
             next_state, reward, terminated, truncated, _ = env.step(action)
@@ -91,10 +94,13 @@ def sarsa(env, gamma, lr, episodes, seed=0,
             steps += 1
             if terminated and _fell(env, next_state):
                 fell = True
+            if truncated and not terminated:
+                timed_out = True
             state, action = next_state, next_action
 
         history["rewards"].append(total_reward)
         history["falls"].append(int(fell))
+        history["timeouts"].append(int(timed_out))
         history["steps"].append(steps)
 
     return Q, history

@@ -2,11 +2,14 @@ import gymnasium as gym
 from gymnasium import Wrapper
 
 
+# ---------------------------------------------------------------------------
+# Cartes Ibrahim (version active, inspirée du cliff-walking Sutton & Barto)
+# ---------------------------------------------------------------------------
 # Cas 1 : 4x4 déterministe (référence sans stochasticité)
 # Cas 2 : 4x4 stochastique (même grille, isole l'effet de is_slippery)
-# Cas 3 : 6x6 stochastique, rangée de trous créant un obstacle partiel (inspiré du cliff walking)
-#   - chemin court risqué vs chemin long sûr
-#   - version initiale trop difficile (voir dossier archive_hard_v1)
+# Cas 3 : 6x6 stochastique, falaise rangée 2 + objectif bas-gauche
+#   → chemin court risqué (gauche) vs chemin long sûr (droite puis bas)
+#   → version initiale trop difficile archivée dans archive_hard_v1
 MAPS = {
     "easy": {
         "desc": ["SFFH", "FFFH", "FFFH", "FFGH"],
@@ -17,7 +20,25 @@ MAPS = {
         "is_slippery": True,
     },
     "hard": {
-        "desc": ["SFFFFF", "FFFFFF", "HHHHFF", "FFFFFF", "FFFFFF", "FFFFFG"],
+        "desc": ["SFFFFF", "FFFFFF", "HHHHFF", "FFFFFF", "FFFFFF", "GFFFFF"],
+        "is_slippery": True,
+    },
+
+    # ---------------------------------------------------------------------------
+    # Cartes Khalil (branche second_version) — testées avec l'entraînement Ibrahim
+    # ---------------------------------------------------------------------------
+    # easy_k / medium_k : 6×6, 3 objectifs stratégiques, 6 trous répartis
+    # hard_k            : 6×6, 1 objectif central entouré de trous, 9 trous
+    "easy_k": {
+        "desc": ["SFFFFG", "FFHFHF", "FFFGHF", "FFHFHF", "FFFFFH", "FFFFFG"],
+        "is_slippery": False,
+    },
+    "medium_k": {
+        "desc": ["SFFFFG", "FFHFHF", "FFFGHF", "FFHFHF", "FFFFFH", "FFFFFG"],
+        "is_slippery": True,
+    },
+    "hard_k": {
+        "desc": ["SFFFFF", "FFHFHF", "FFHGFF", "FFFFFH", "FFFFFF", "HHFHHH"],
         "is_slippery": True,
     },
 }
