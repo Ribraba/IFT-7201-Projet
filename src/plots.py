@@ -34,6 +34,37 @@ def _smooth(data, window):
     return np.convolve(data, np.ones(window) / window, mode="valid")
 
 
+def _set_axis_with_margin(ax, lower=None, upper=None, min_span=0.5, pad_ratio=0.08):
+    """Ajuste dynamiquement l'échelle à partir des données tracées."""
+    values = []
+    for line in ax.lines:
+        y = np.asarray(line.get_ydata(), dtype=float)
+        if y.size:
+            values.append(y)
+    if not values:
+        return
+
+    y = np.concatenate(values)
+    y_min = float(np.min(y))
+    y_max = float(np.max(y))
+    span = max(y_max - y_min, min_span)
+    pad = span * pad_ratio
+
+    lo = y_min - pad if lower is None else lower
+    hi = y_max + pad if upper is None else upper
+
+    if lower is not None and upper is None:
+        hi = max(hi, lower + min_span)
+    elif upper is not None and lower is None:
+        lo = min(lo, upper - min_span)
+    elif lower is None and upper is None and hi - lo < min_span:
+        center = (hi + lo) / 2
+        lo = center - min_span / 2
+        hi = center + min_span / 2
+
+    ax.set_ylim(lo, hi)
+
+
 def load_results(results_dir):
     experiments = {}
     subdirs = sorted(d for d in os.listdir(results_dir)
@@ -114,14 +145,16 @@ def plot_training_curves(experiments, env_names, save_dir="figures", window=500)
         axes[0].set_ylabel("Récompense par épisode")
         axes[0].legend(loc="lower right")
         axes[1].set_ylabel("Taux de chutes (%)")
-        axes[1].set_ylim(-5, 105)
         axes[1].yaxis.set_major_formatter(mticker.PercentFormatter())
         axes[1].legend(loc="upper right")
         axes[2].set_ylabel("Taux de boucles (%)")
         axes[2].set_xlabel(f"Épisode (fenêtre = {window})")
-        axes[2].set_ylim(-5, 105)
         axes[2].yaxis.set_major_formatter(mticker.PercentFormatter())
         axes[2].legend(loc="upper right")
+        # Mise à l'échelle adaptative lisible, y compris sur le cas Facile.
+        _set_axis_with_margin(axes[0], upper=1.0, min_span=1.5)
+        _set_axis_with_margin(axes[1], lower=-0.25, min_span=0.5)
+        _set_axis_with_margin(axes[2], lower=-0.25, min_span=0.5)
 
         if not has_timeout_data:
             axes[2].text(0.5, 0.5,
@@ -296,9 +329,10 @@ def plot_policy_arrows(experiments, env_names, save_dir="figures"):
         safe_set  = set(safe_path) if safe_path else set()
 
         ncols_fig = 2
-        cell_size = max(1.2, 5.0 / max(nrow, ncol))
-        fig_w = ncols_fig * ncol * cell_size + 1.0
-        fig_h = nrow * cell_size + 1.2
+        # Largeur fixe ≈ \linewidth → rétrécissement minimal dans le PDF
+        fig_w = 7.0
+        fig_h = fig_w / 2.0 * (nrow / ncol) + 0.8
+        cell_size = (fig_w - 1.0) / (2 * ncol)
         fig, axes = plt.subplots(1, 2, figsize=(fig_w, fig_h))
         fig.suptitle(f"Politiques greedy — {env_name}", fontsize=12, fontweight="bold")
 
@@ -345,19 +379,16 @@ def plot_policy_arrows(experiments, env_names, save_dir="figures"):
                     if tile == "H":
                         ax.text(c + 0.5, y + 0.5, "H",
                                 ha="center", va="center",
-                                fontsize=max(8, int(cell_size * 8)),
-                                fontweight="bold", color="white")
+                                fontsize=16, fontweight="bold", color="white")
                     elif tile in ("S", "G"):
                         ax.text(c + 0.5, y + 0.5, tile,
                                 ha="center", va="center",
-                                fontsize=max(8, int(cell_size * 8)),
-                                fontweight="bold", color=TILE_TEXT[tile])
+                                fontsize=16, fontweight="bold", color=TILE_TEXT[tile])
                     else:
                         action = int(np.argmax(Q_mean[state]))
                         ax.text(c + 0.5, y + 0.5, ACTION_ARROW[action],
                                 ha="center", va="center",
-                                fontsize=max(10, int(cell_size * 10)),
-                                color=COLORS[3])
+                                fontsize=18, color=COLORS[3])
 
             # Légende chemin Dijkstra
             if safe_set:

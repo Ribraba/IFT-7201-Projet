@@ -17,6 +17,7 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage{float}
+\usepackage{wrapfig}
 \setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
 \setlength{\floatsep}{6pt plus 2pt minus 2pt}
 \setlength{\intextsep}{6pt plus 2pt minus 2pt}
@@ -74,7 +75,7 @@ La fonction de récompense est mise en forme pour accélérer la propagation du 
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{../figures/maps.png}
+  \includegraphics[width=0.7\linewidth]{../figures/maps.png}
   \caption{Visualisation des trois environnements. \texttt{S}~: départ, \texttt{G}~: objectif, \texttt{H}~: trou (situation dangereuse), \texttt{F}~: case libre.}
   \label{fig:maps}
 \end{figure}
@@ -92,16 +93,16 @@ Le Tableau~\ref{tab:configs} et la Figure~\ref{fig:maps} présentent les trois c
     \midrule
     Taille de la grille          & $4\times4$ & $4\times4$ & $6\times6$ \\
     \texttt{is\_slippery}        & Non & Oui & Oui \\
-    Nombre de trous              & 3   & 3   & 4 \\
+    Nombre de trous              & 4   & 4   & 4 \\
     Positionnement               & Colonne droite & Colonne droite & Rangée centrale \\
     Position de l'objectif       & Bas-centre & Bas-centre & Bas-gauche \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\textbf{Facile} ($4\times4$, déterministe, 3 trous en colonne). Les transitions sont déterministes. Ce cas sert de référence : en l'absence de bruit, toute stratégie TD doit converger vers un taux de chutes nul et un taux de boucles nul. Il valide l'implémentation et établit une borne supérieure de performance.
+\textbf{Facile} ($4\times4$, déterministe, 4 trous en colonne). Les transitions sont déterministes. Ce cas sert de référence : en l'absence de bruit, toute stratégie TD doit converger vers un taux de chutes nul et un taux de boucles nul. Il valide l'implémentation et établit une borne supérieure de performance.
 
-\textbf{Moyen} ($4\times4$, stochastique, 3 trous en colonne). Topologie identique à \textit{Facile} ; seul \texttt{is\_slippery} change. Ce cas isole rigoureusement l'effet de la stochasticité : toute dégradation de performance est attribuable uniquement au non-déterminisme, non à la topologie de la grille.
+\textbf{Moyen} ($4\times4$, stochastique, 4 trous en colonne). Topologie identique à \textit{Facile} ; seul \texttt{is\_slippery} change. Ce cas isole rigoureusement l'effet de la stochasticité : toute dégradation de performance est attribuable uniquement au non-déterminisme, non à la topologie de la grille.
 
 \textbf{Difficile} ($6\times6$, stochastique, 4 trous contigus en rangée centrale, objectif en bas-gauche). La rangée \texttt{HHHHFF} crée une barrière horizontale analogue au problème du \textit{cliff walking}~\citep[chap.~6]{sutton2018}. L'objectif étant placé en bas-gauche, directement au-dessous de la barrière, deux trajectoires coexistent : un chemin court risqué descendant par la colonne gauche (en bordure des trous) et un long détour sûr contournant la barrière par les colonnes droites. Le passage à la grille $6\times6$ est délibéré : il augmente l'espace d'états pour que le détour sûr soit significativement plus long que le chemin risqué, condition nécessaire pour que la divergence \textit{off-policy}/\textit{on-policy} soit observable et mesurable par l'algorithme de Dijkstra.
 
@@ -143,25 +144,25 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
 \section{Résultats}
 \begin{figure}[H]
   \centering
-  \begin{subfigure}[t]{0.47\linewidth}
+  \begin{subfigure}[t]{0.32\linewidth}
     \includegraphics[width=\linewidth]{../figures/training_easy.png}
-    \caption{\textbf{Facile} --- Convergence vers 0\,\% de chutes et 0\,\% de boucles dès $\approx\!2\,000$ épisodes. Valide les deux implémentations en environnement déterministe.}
+    \caption{\textbf{Facile} --- Convergence vers 0\,\% de chutes et de boucles dès $\approx\!2\,000$ épisodes.}
     \label{fig:train_easy}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.47\linewidth}
+  \begin{subfigure}[t]{0.32\linewidth}
     \includegraphics[width=\linewidth]{../figures/training_medium.png}
-    \caption{\textbf{Moyen} --- La stochasticité fait bondir le taux de chutes initial. Le taux ne converge pas vers zéro : $\varepsilon_{\min}=5\%$ combiné aux glissades maintient un risque irréductible lié au bruit de transition.}
+    \caption{\textbf{Moyen} --- La stochasticité maintient un risque résiduel de chute.}
     \label{fig:train_medium}
   \end{subfigure}
-  \caption{Courbes d'apprentissage (3 panneaux : récompense, chutes, boucles). Bande colorée~: $\pm$ un écart-type sur 10 répétitions.}
-  \label{fig:train_easy_medium}
-\end{figure}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.48\linewidth]{../figures/training_hard.png}
-  \caption{\textbf{Difficile} --- Les deux stratégies démarrent à un taux de chutes élevé, puis divergent : SARSA converge vers un taux de chutes et de boucles plus faible que Q-learning, reproduisant le phénomène de \textit{cliff walking}~\citep{sutton2018}. La mise à jour \textit{on-policy} intègre le coût de l'exploration et oriente l'agent vers le détour sûr.}
-  \label{fig:train_hard}
+  \hfill
+  \begin{subfigure}[t]{0.32\linewidth}
+    \includegraphics[width=\linewidth]{../figures/training_hard.png}
+    \caption{\textbf{Difficile} --- SARSA réduit davantage chutes et boucles que Q-learning.}
+    \label{fig:train_hard}
+  \end{subfigure}
+  \caption{Courbes d'apprentissage (récompense, chutes, boucles). Bande colorée~: $\pm$ un écart-type sur 10 répétitions. \textit{Facile} valide l'implémentation en environnement déterministe ; \textit{Moyen} isole l'effet de la stochasticité ; \textit{Difficile} révèle la divergence \textit{off-policy}/\textit{on-policy}.}
+  \label{fig:train_all}
 \end{figure}
 \begin{figure}[H]
   \centering
@@ -171,7 +172,7 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
     \label{fig:overview}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.46\linewidth}
+  \begin{subfigure}[t]{0.39\linewidth}
     \includegraphics[width=\linewidth]{../figures/danger_boxplot.png}
     \caption{Distribution des situations dangereuses par épisode. Sur le cas Difficile, SARSA affiche une médiane plus basse et une variance moindre.}
     \label{fig:boxplot}
@@ -180,44 +181,47 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \label{fig:eval_overview}
 \end{figure}
 
-Le Tableau~\ref{tab:eval} synthétise les indicateurs d'évaluation. Sur le cas Difficile, la divergence est marquée : Q-learning accumule $31{,}0\% \pm 5{,}0\%$ de boucles contre $18{,}8\% \pm 5{,}7\%$ pour SARSA ($+12{,}2$\,pts). SARSA réduit également la proximité aux trous ($25{,}9\%$ contre $29{,}9\%$) et emprunte nettement plus souvent le chemin sûr identifié par Dijkstra~\citep{dijkstra1959} ($70{,}4\% \pm 2{,}9\%$ contre $60{,}1\% \pm 2{,}9\%$, écart de $+10{,}3$\,pts), avec une variance identique confirmant la robustesse de cet avantage.
-
 \begin{table}[H]
   \centering
-  \caption{Indicateurs d'évaluation finale (politique greedy, 500 épisodes, moyenne $\pm$ écart-type, 10 répétitions). Chemin sûr : chevauchement $\geq 50\%$ avec le chemin Dijkstra (cas Difficile uniquement).}
-  \label{tab:eval}
-  \small
-  \begin{tabular}{llccc}
-    \toprule
-    & & \textbf{Facile} & \textbf{Moyen} & \textbf{Difficile} \\
-    \midrule
-    \multirow{4}{*}{Q-learning}
-      & Succès      & $100{,}0 \pm 0{,}0\%$ & $99{,}7 \pm 0{,}3\%$ & $69{,}0 \pm 5{,}0\%$ \\
-      & Boucles     & $0{,}0 \pm 0{,}0\%$   & $0{,}3 \pm 0{,}3\%$  & $31{,}0 \pm 5{,}0\%$ \\
-      & Danger      & $20{,}0 \pm 0{,}0\%$  & $28{,}5 \pm 1{,}6\%$ & $29{,}9 \pm 2{,}4\%$ \\
-      & Chemin sûr  & ---                   & ---                  & $60{,}1 \pm 2{,}9\%$ \\
-    \midrule
-    \multirow{4}{*}{SARSA}
-      & Succès      & $100{,}0 \pm 0{,}0\%$ & $99{,}7 \pm 0{,}2\%$ & $81{,}2 \pm 5{,}7\%$ \\
-      & Boucles     & $0{,}0 \pm 0{,}0\%$   & $0{,}3 \pm 0{,}2\%$  & $18{,}8 \pm 5{,}7\%$ \\
-      & Danger      & $20{,}0 \pm 0{,}0\%$  & $27{,}7 \pm 0{,}6\%$ & $25{,}9 \pm 2{,}2\%$ \\
-      & Chemin sûr  & ---                   & ---                  & $70{,}4 \pm 2{,}9\%$ \\
-    \bottomrule
-  \end{tabular}
+  \begin{minipage}[c]{0.60\linewidth}
+    \caption{Indicateurs d'évaluation finale (politique greedy, 500 épisodes, moyenne $\pm$ écart-type, 10 répétitions). Chemin sûr : chevauchement $\geq 50\%$ avec le chemin Dijkstra (cas Difficile uniquement).}
+    \label{tab:eval}
+    \scriptsize
+    \begin{tabular}{llccc}
+      \toprule
+      & & \textbf{Facile} & \textbf{Moyen} & \textbf{Difficile} \\
+      \midrule
+      \multirow{4}{*}{Q-learning}
+        & Succès      & $100{,}0 \pm 0{,}0\%$ & $99{,}7 \pm 0{,}3\%$ & $69{,}0 \pm 5{,}0\%$ \\
+        & Boucles     & $0{,}0 \pm 0{,}0\%$   & $0{,}3 \pm 0{,}3\%$  & $31{,}0 \pm 5{,}0\%$ \\
+        & Danger      & $20{,}0 \pm 0{,}0\%$  & $28{,}5 \pm 1{,}6\%$ & $29{,}9 \pm 2{,}4\%$ \\
+        & Chemin sûr  & ---                   & ---                  & $60{,}1 \pm 2{,}9\%$ \\
+      \midrule
+      \multirow{4}{*}{SARSA}
+        & Succès      & $100{,}0 \pm 0{,}0\%$ & $99{,}7 \pm 0{,}2\%$ & $81{,}2 \pm 5{,}7\%$ \\
+        & Boucles     & $0{,}0 \pm 0{,}0\%$   & $0{,}3 \pm 0{,}2\%$  & $18{,}8 \pm 5{,}7\%$ \\
+        & Danger      & $20{,}0 \pm 0{,}0\%$  & $27{,}7 \pm 0{,}6\%$ & $25{,}9 \pm 2{,}2\%$ \\
+        & Chemin sûr  & ---                   & ---                  & $70{,}4 \pm 2{,}9\%$ \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.37\linewidth}
+    \small
+    Le Tableau~\ref{tab:eval} montre que la divergence est surtout marquée sur \textit{Difficile} : Q-learning accumule $31{,}0\% \pm 5{,}0\%$ de boucles contre $18{,}8\% \pm 5{,}7\%$ pour SARSA. SARSA réduit aussi la proximité aux trous ($25{,}9\%$ contre $29{,}9\%$) et emprunte plus souvent le chemin sûr Dijkstra ($70{,}4\% \pm 2{,}9\%$ contre $60{,}1\% \pm 2{,}9\%$), confirmant un comportement plus prudent mais encore imparfait.
+  \end{minipage}
 \end{table}
 
 La Figure~\ref{fig:policy_hard} visualise directement les politiques greedy apprises sur le cas Difficile. Les flèches révèlent que SARSA dirige systématiquement l'agent vers les colonnes droites (contour Dijkstra en vert) avant de descendre vers G, tandis que Q-learning présente des flèches contradictoires dans la zone centrale — symptôme de boucles dues à une sous-estimation du risque de glissade. Ce résultat illustre concrètement la distinction \textit{off-policy}/\textit{on-policy} : Q-learning, optimiste, accumule des trajectoires circulaires ($31\%$ de boucles) ; SARSA, conservateur, apprend un détour cohérent ($18{,}8\%$).
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{../figures/policy_hard.png}
+  \includegraphics[width=0.5\linewidth]{../figures/policy_hard.png}
   \caption{Politiques greedy apprises sur le cas Difficile (moyenne sur 10 répétitions). Les flèches indiquent l'action greedy dans chaque état libre ; le contour vert délimite le chemin de référence Dijkstra. SARSA emprunte le détour sûr plus systématiquement que Q-learning.}
   \label{fig:policy_hard}
 \end{figure}
 
 En somme, Q-learning converge légèrement plus vite en début d'apprentissage mais au prix d'une instabilité persistante : plus de boucles ($31\%$ contre $18{,}8\%$), une plus grande proximité aux trous ($29{,}9\%$ contre $25{,}9\%$) et une politique qui emprunte moins souvent le détour sûr ($60{,}1\%$ contre $70{,}4\%$). SARSA, plus conservateur grâce à sa mise à jour \textit{on-policy}, apprend un comportement plus sûr et plus cohérent. Ces observations soulignent les limites fondamentales des méthodes TD sans mécanisme explicite d'évitement du danger, et motivent l'introduction d'une telle approche dans le rapport final.
 
-\newpage
 \bibliographystyle{unsrtnat}
 \bibliography{references}
 
