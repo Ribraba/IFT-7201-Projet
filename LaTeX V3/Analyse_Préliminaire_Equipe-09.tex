@@ -69,7 +69,7 @@
   \item \textbf{Positionnement des situations dangereuses.} Regrouper les trous de façon contiguë (ex.\ rangée horizontale) crée un obstacle de type falaise, forçant l'agent à choisir entre un chemin court risqué et un détour sûr.
 \end{itemize}
 
-La fonction de récompense est mise en forme pour accélérer la propagation du signal de danger : chute dans un trou ($r = -1{,}0$), atteinte de l'objectif ($r = +1{,}0$), collision avec un mur ($r = -0{,}1$), déplacement ordinaire ($r = 0{,}0$).
+La fonction de récompense est mise en forme (\textit{reward shaping}) pour accélérer la propagation du signal de danger sans modifier la politique optimale~\citep{ng1999} : chute dans un trou ($r = -1{,}0$), atteinte de l'objectif ($r = +1{,}0$), collision avec un mur ($r = -0{,}1$), déplacement ordinaire ($r = 0{,}0$).
 
 \subsection{Cas d'étude}
 
@@ -102,20 +102,20 @@ Le Tableau~\ref{tab:configs} et la Figure~\ref{fig:maps} présentent les trois c
 
 \textbf{Facile} ($4\times4$, déterministe, 4 trous en colonne). Les transitions sont déterministes. Ce cas sert de référence : en l'absence de bruit, toute stratégie TD doit converger vers un taux de chutes nul et un taux de boucles nul. Il valide l'implémentation et établit une borne supérieure de performance.
 
-\textbf{Moyen} ($4\times4$, stochastique, 4 trous en colonne). Topologie identique à \textit{Facile} ; seul \texttt{is\_slippery} change. Ce cas isole rigoureusement l'effet de la stochasticité : toute dégradation de performance est attribuable uniquement au non-déterminisme, non à la topologie de la grille.
+\textbf{Moyen} ($4\times4$, stochastique, 4 trous en colonne). Topologie identique à \textit{Facile} ; seul \texttt{is\_slippery} change. En gardant la même topologie, toute différence de performance ne peut venir que du bruit de transition — ce qui permet d'isoler proprement l'effet de la stochasticité.
 
 \textbf{Difficile} ($6\times6$, stochastique, 4 trous contigus en rangée centrale, objectif en bas-gauche). La rangée \texttt{HHHHFF} crée une barrière horizontale analogue au problème du \textit{cliff walking}~\citep[chap.~6]{sutton2018}. L'objectif étant placé en bas-gauche, directement au-dessous de la barrière, deux trajectoires coexistent : un chemin court risqué descendant par la colonne gauche (en bordure des trous) et un long détour sûr contournant la barrière par les colonnes droites. Le passage à la grille $6\times6$ est délibéré : il augmente l'espace d'états pour que le détour sûr soit significativement plus long que le chemin risqué, condition nécessaire pour que la divergence \textit{off-policy}/\textit{on-policy} soit observable et mesurable par l'algorithme de Dijkstra.
 
 
 \section{Stratégies considérées}
 
-Deux stratégies de différence temporelle (TD) sont sélectionnées comme baselines : Q-learning et SARSA. Ces méthodes ne disposent d'aucun mécanisme conçu explicitement pour éviter les situations dangereuses, ce qui permet d'établir une limite de référence que toute stratégie de sécurité ultérieure devra dépasser. Le choix de méthodes tabulaires (plutôt que DQN~\citep{mnih2015} ou PPO) est justifié par la taille réduite de l'espace d'états ($4\times4 = 16$ et $6\times6 = 36$ états) : les méthodes tabulaires convergent vers la solution exacte sans approximation de fonction, ce qui garantit que les différences observées reflètent bien les propriétés intrinsèques des algorithmes. De plus, Q-learning et SARSA forment la paire canonique \textit{off-policy} / \textit{on-policy} dont les comportements divergents face aux obstacles sont directement prédits par la théorie~\citep{sutton2018}.
+Deux stratégies de différence temporelle (TD) sont sélectionnées comme baselines : Q-learning et SARSA. Ces méthodes ne disposent d'aucun mécanisme conçu explicitement pour éviter les situations dangereuses, ce qui permet d'établir une limite de référence que toute stratégie de sécurité ultérieure devra dépasser. Le choix de méthodes tabulaires (plutôt que DQN~\citep{mnih2015} ou PPO) se justifie par la taille réduite de l'espace d'états ($4\times4 = 16$ et $6\times6 = 36$ états) : sans approximation de fonction, les différences observées reflètent directement les propriétés intrinsèques des algorithmes plutôt qu'un artefact d'entraînement. De plus, Q-learning et SARSA forment la paire canonique \textit{off-policy} / \textit{on-policy} dont les comportements divergents face aux obstacles sont directement prédits par la théorie~\citep{sutton2018}. On choisit volontairement des baselines simples pour que la comparaison avec la stratégie de sécurité du rapport final soit claire et sans ambiguïté.
 
-\textbf{Q-learning}~\citep{watkins1992} est une méthode \textit{off-policy} dont la règle de mise à jour repose sur la valeur maximale de l'état suivant :
+\textbf{Q-learning}~\citep{watkins1992} est une méthode \textit{off-policy} dont la règle de mise à jour est :
 \begin{equation}
   Q(s, a) \leftarrow Q(s, a) + \alpha \bigl[r + \gamma \max_{a'} Q(s', a') - Q(s, a)\bigr].
 \end{equation}
-Cette mise à jour optimiste suppose que la politique optimale sera suivie dans le futur, indépendamment de l'exploration en cours. Dans des environnements à obstacles groupés, cette hypothèse peut conduire à sous-estimer le risque réel de chute et à préférer le chemin court risqué.
+En pratique, Q-learning fait comme si l'agent allait toujours choisir la meilleure action ensuite — ce qui n'est pas le cas en exploration. Dans des environnements à obstacles groupés, cette hypothèse peut conduire à sous-estimer le risque réel de chute et à préférer le chemin court risqué.
 
 \textbf{SARSA}~\citep{rummery1994} est une méthode \textit{on-policy} qui utilise l'action réellement sélectionnée selon la politique $\varepsilon$-greedy courante :
 \begin{equation}
@@ -128,7 +128,7 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
 
 \textbf{Librairies.} L'environnement est fourni par Gymnasium~1.2.3~\citep{towers2024}. Q-learning et SARSA sont implémentés directement en Python/NumPy~2.2.6, sans recours à Stable-Baselines3~\citep{raffin2021}, afin de contrôler précisément les mises à jour TD.
 
-\textbf{Hyper-paramètres.} Les deux algorithmes partagent : $\gamma = 0{,}99$ (horizon long, adapté aux trajectoires multi-étapes jusqu'à l'objectif), $\alpha_0 = 0{,}5$ (valeur standard pour les méthodes TD tabulaires~\citep{sutton2018}), décroissance $0{,}9995$ pour $\alpha$ et $\varepsilon$ jusqu'aux minima $\alpha_{\min}=0{,}01$ et $\varepsilon_{\min}=0{,}05$. Ce taux de décroissance amène $\varepsilon$ à son minimum après $\approx\!6\,000$ épisodes, assurant une phase d'exploration large suivie d'une exploitation progressive sur les 14\,000 épisodes restants.
+\textbf{Hyper-paramètres.} Les deux algorithmes partagent : $\gamma = 0{,}99$, $\alpha_0 = 0{,}5$ (valeur de départ classique~\citep{sutton2018}), décroissance $0{,}9995$ pour $\alpha$ et $\varepsilon$ jusqu'aux minima $\alpha_{\min}=0{,}01$ et $\varepsilon_{\min}=0{,}05$. Ce taux de décroissance amène $\varepsilon$ à son minimum après $\approx\!6\,000$ épisodes, assurant une phase d'exploration large suivie d'une exploitation progressive sur les 14\,000 épisodes restants.
 
 \textbf{Paramètres expérimentaux.} Chaque configuration est entraînée sur 20\,000 épisodes, avec un maximum de 200 pas par épisode. Les expériences sont répétées avec $n=10$ graines indépendantes (graines 0 à 9) pour produire des intervalles de confiance (moyenne $\pm$ écart-type). L'évaluation finale utilise la politique greedy ($\varepsilon=0$) sur 500 épisodes.
 
@@ -168,7 +168,7 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \centering
   \begin{subfigure}[t]{0.46\linewidth}
     \includegraphics[width=\linewidth]{../figures/overview_success_rate.png}
-    \caption{Taux de succès à l'évaluation (politique greedy, 500 épisodes). Les échecs sont exclusivement des boucles (dépassements de la limite de pas) — le taux de chutes est nul.}
+    \caption{Taux de succès à l'évaluation (politique greedy, 500 épisodes). Les échecs sont exclusivement des boucles (dépassements de la limite de pas) — le taux de chutes est nul, conséquence attendue du signal négatif $r{=}-1$ qui conditionne les deux politiques à fuir les trous dès la phase d'exploitation.}
     \label{fig:overview}
   \end{subfigure}
   \hfill
@@ -207,7 +207,7 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
   \end{minipage}\hfill
   \begin{minipage}[c]{0.37\linewidth}
     \small
-    Le Tableau~\ref{tab:eval} montre que la divergence est surtout marquée sur \textit{Difficile} : Q-learning accumule $31{,}0\% \pm 5{,}0\%$ de boucles contre $18{,}8\% \pm 5{,}7\%$ pour SARSA. SARSA réduit aussi la proximité aux trous ($25{,}9\%$ contre $29{,}9\%$) et emprunte plus souvent le chemin sûr Dijkstra ($70{,}4\% \pm 2{,}9\%$ contre $60{,}1\% \pm 2{,}9\%$), confirmant un comportement plus prudent mais encore imparfait.
+    Le Tableau~\ref{tab:eval} montre que la divergence est surtout marquée sur \textit{Difficile} : Q-learning accumule $31{,}0\% \pm 5{,}0\%$ de boucles contre $18{,}8\% \pm 5{,}7\%$ pour SARSA. SARSA réduit aussi la proximité aux trous ($25{,}9\%$ contre $29{,}9\%$) et emprunte plus souvent le chemin sûr Dijkstra ($70{,}4\% \pm 2{,}9\%$ contre $60{,}1\% \pm 2{,}9\%$), confirmant un comportement plus prudent mais encore loin d'être sûr.
   \end{minipage}
 \end{table}
 
@@ -215,12 +215,12 @@ La Figure~\ref{fig:policy_hard} visualise directement les politiques greedy appr
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.5\linewidth]{../figures/policy_hard.png}
+  \includegraphics[width=0.45\linewidth]{../figures/policy_hard.png}
   \caption{Politiques greedy apprises sur le cas Difficile (moyenne sur 10 répétitions). Les flèches indiquent l'action greedy dans chaque état libre ; le contour vert délimite le chemin de référence Dijkstra. SARSA emprunte le détour sûr plus systématiquement que Q-learning.}
   \label{fig:policy_hard}
 \end{figure}
 
-En somme, Q-learning converge légèrement plus vite en début d'apprentissage mais au prix d'une instabilité persistante : plus de boucles ($31\%$ contre $18{,}8\%$), une plus grande proximité aux trous ($29{,}9\%$ contre $25{,}9\%$) et une politique qui emprunte moins souvent le détour sûr ($60{,}1\%$ contre $70{,}4\%$). SARSA, plus conservateur grâce à sa mise à jour \textit{on-policy}, apprend un comportement plus sûr et plus cohérent. Ces observations soulignent les limites fondamentales des méthodes TD sans mécanisme explicite d'évitement du danger, et motivent l'introduction d'une telle approche dans le rapport final.
+En somme, Q-learning converge légèrement plus vite en début d'apprentissage mais au prix d'une instabilité persistante : plus de boucles ($31\%$ contre $18{,}8\%$), une plus grande proximité aux trous ($29{,}9\%$ contre $25{,}9\%$) et une politique qui emprunte moins souvent le détour sûr ($60{,}1\%$ contre $70{,}4\%$). Ces résultats montrent que même SARSA, plus conservateur grâce à sa mise à jour \textit{on-policy}, reste loin d'un comportement vraiment sûr — ce qui justifie l'introduction d'une stratégie conçue explicitement pour ça dans le rapport final.
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}
