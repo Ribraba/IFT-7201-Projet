@@ -16,7 +16,8 @@
 ├── FrozenLakeProject.ipynb     # Vitrine : visualisation des environnements et résultats
 ├── results/                    # Résultats JSON par expérience/run (généré)
 ├── figures/                    # Figures PNG (générées)
-└── LaTeX V3/                   # Rapport LaTeX (analyse préliminaire finale)
+└── docs/                   # Rapports LaTeX (analyse préliminaire, finale...) ainsi que les autres documents nécessaires au projet
+    └── ...
 ```
 
 ## Installation
