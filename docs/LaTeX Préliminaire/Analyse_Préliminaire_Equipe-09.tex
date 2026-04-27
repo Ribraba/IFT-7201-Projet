@@ -75,7 +75,7 @@ La fonction de récompense est mise en forme (\textit{reward shaping}) pour acc�
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.7\linewidth]{../figures/maps.png}
+  \includegraphics[width=0.7\linewidth]{../../figures/maps.png}
   \caption{Visualisation des trois environnements. \texttt{S}~: départ, \texttt{G}~: objectif, \texttt{H}~: trou (situation dangereuse), \texttt{F}~: case libre.}
   \label{fig:maps}
 \end{figure}
@@ -145,19 +145,19 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
 \begin{figure}[H]
   \centering
   \begin{subfigure}[t]{0.32\linewidth}
-    \includegraphics[width=\linewidth]{../figures/training_easy.png}
+    \includegraphics[width=\linewidth]{../../figures/training_easy.png}
     \caption{\textbf{Facile} --- Convergence vers 0\,\% de chutes et de boucles dès $\approx\!2\,000$ épisodes.}
     \label{fig:train_easy}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.32\linewidth}
-    \includegraphics[width=\linewidth]{../figures/training_medium.png}
+    \includegraphics[width=\linewidth]{../../figures/training_medium.png}
     \caption{\textbf{Moyen} --- La stochasticité maintient un risque résiduel de chute.}
     \label{fig:train_medium}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.32\linewidth}
-    \includegraphics[width=\linewidth]{../figures/training_hard.png}
+    \includegraphics[width=\linewidth]{../../figures/training_hard.png}
     \caption{\textbf{Difficile} --- SARSA réduit davantage chutes et boucles que Q-learning.}
     \label{fig:train_hard}
   \end{subfigure}
@@ -167,13 +167,13 @@ Puisque $a'$ peut être une action aléatoire (avec probabilité $\varepsilon$),
 \begin{figure}[H]
   \centering
   \begin{subfigure}[t]{0.46\linewidth}
-    \includegraphics[width=\linewidth]{../figures/overview_success_rate.png}
+    \includegraphics[width=\linewidth]{../../figures/overview_success_rate.png}
     \caption{Taux de succès à l'évaluation (politique greedy, 500 épisodes). Les échecs sont exclusivement des boucles (dépassements de la limite de pas) — le taux de chutes est nul, conséquence attendue du signal négatif $r{=}-1$ qui conditionne les deux politiques à fuir les trous dès la phase d'exploitation.}
     \label{fig:overview}
   \end{subfigure}
   \hfill
   \begin{subfigure}[t]{0.39\linewidth}
-    \includegraphics[width=\linewidth]{../figures/danger_boxplot.png}
+    \includegraphics[width=\linewidth]{../../figures/danger_boxplot.png}
     \caption{Distribution des situations dangereuses par épisode. Sur le cas Difficile, SARSA affiche une médiane plus basse et une variance moindre.}
     \label{fig:boxplot}
   \end{subfigure}
@@ -215,7 +215,7 @@ La Figure~\ref{fig:policy_hard} visualise directement les politiques greedy appr
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.45\linewidth]{../figures/policy_hard.png}
+  \includegraphics[width=0.45\linewidth]{../../figures/policy_hard.png}
   \caption{Politiques greedy apprises sur le cas Difficile (moyenne sur 10 répétitions). Les flèches indiquent l'action greedy dans chaque état libre ; le contour vert délimite le chemin de référence Dijkstra. SARSA emprunte le détour sûr plus systématiquement que Q-learning.}
   \label{fig:policy_hard}
 \end{figure}
