@@ -6,7 +6,7 @@ import time
 import yaml
 
 from src.envs    import make_env
-from src.agents  import q_learning, sarsa
+from src.agents  import q_learning, sarsa, shielded_qlearning
 from src.evaluate import evaluate_agent, evaluate_safe_path_rate
 
 

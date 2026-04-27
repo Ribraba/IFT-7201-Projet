@@ -100,3 +100,47 @@
   eps_decay: 0.9995
   lr_min: 0.01
   lr_decay: 0.9995
+
+# ---- Shielded Q-learning -----------------------------------------------
+
+- name: "shielded_qlearning_easy"
+  algo: "shielded_qlearning"
+  env: "easy"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
+
+- name: "shielded_qlearning_medium"
+  algo: "shielded_qlearning"
+  env: "medium"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
+
+- name: "shielded_qlearning_hard"
+  algo: "shielded_qlearning"
+  env: "hard"
+  n_runs: 10
+  seed_base: 0
+  gamma: 0.99
+  lr: 0.5
+  episodes: 20000
+  eps_start: 1.0
+  eps_min: 0.05
+  eps_decay: 0.9995
+  lr_min: 0.01
+  lr_decay: 0.9995
