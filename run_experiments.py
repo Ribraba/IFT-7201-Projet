@@ -10,7 +10,7 @@ from src.agents  import q_learning, sarsa, shielded_qlearning
 from src.evaluate import evaluate_agent, evaluate_safe_path_rate
 
 
-ALGO_FN = {"qlearning": q_learning, "sarsa": sarsa}
+ALGO_FN = {"qlearning": q_learning, "sarsa": sarsa, "shielded_qlearning": shielded_qlearning}
 
 
 def load_config(path):

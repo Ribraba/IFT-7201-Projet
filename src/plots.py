@@ -12,8 +12,20 @@ import matplotlib.patches as mpatches
 COLORS = ['#e30513', '#ffc103', '#0099ff', '#515151',
           '#f7a941', '#51a27e', '#702e78', '#7b003d']
 
-ALGO_COLOR = {"qlearning": COLORS[0], "sarsa": COLORS[2]}
-ALGO_LABEL = {"qlearning": "Q-learning", "sarsa": "SARSA"}
+ALGO_COLOR = {"qlearning": COLORS[0], "sarsa": COLORS[2], "shielded_qlearning": COLORS[4]}
+ALGO_LABEL = {"qlearning": "Q-learning", "sarsa": "SARSA", "shielded_qlearning": "Q-learning blindé"}
+
+# Trie par longueur décroissante pour que "shielded_qlearning" soit testé avant "qlearning"
+_ALGOS_BY_LEN = sorted(ALGO_COLOR.keys(), key=len, reverse=True)
+
+
+def _env_of(exp_name):
+    """Extrait le nom d'environnement depuis 'shielded_qlearning_hard' → 'hard'."""
+    for algo in _ALGOS_BY_LEN:
+        if exp_name.startswith(algo + "_"):
+            return exp_name[len(algo) + 1:]
+    return exp_name.split("_", 1)[1]
+
 
 # Actions FrozenLake : 0=←  1=↓  2=→  3=↑
 ACTION_ARROW = {0: "←", 1: "↓", 2: "→", 3: "↑"}
@@ -105,10 +117,10 @@ def plot_training_curves(experiments, env_names, save_dir="figures", window=500)
         has_timeout_data = False
 
         for exp_name, data in experiments.items():
-            if env_name not in exp_name:
+            if _env_of(exp_name) != env_name:
                 continue
 
-            algo  = "qlearning" if "qlearning" in exp_name else "sarsa"
+            algo  = next(k for k in ALGO_COLOR if exp_name.startswith(k))
             color = ALGO_COLOR[algo]
             label = ALGO_LABEL[algo]
 
@@ -151,10 +163,10 @@ def plot_training_curves(experiments, env_names, save_dir="figures", window=500)
         axes[2].set_xlabel(f"Épisode (fenêtre = {window})")
         axes[2].yaxis.set_major_formatter(mticker.PercentFormatter())
         axes[2].legend(loc="upper right")
-        # Mise à l'échelle adaptative lisible, y compris sur le cas Facile.
-        _set_axis_with_margin(axes[0], upper=1.0, min_span=1.5)
-        _set_axis_with_margin(axes[1], lower=-0.25, min_span=0.5)
-        _set_axis_with_margin(axes[2], lower=-0.25, min_span=0.5)
+        # Échelles fixes et identiques pour tous les environnements → comparaison directe.
+        axes[0].set_ylim(-1.05, 1.05)
+        axes[1].set_ylim(-2, 102)
+        axes[2].set_ylim(-2, 102)
 
         if not has_timeout_data:
             axes[2].text(0.5, 0.5,
@@ -175,18 +187,31 @@ def plot_evaluation_results(experiments, save_dir="figures"):
 
     metrics = ["success_rate", "fall_rate", "danger_rate"]
     labels  = ["Taux de succès (%)", "Taux de chutes (%)", "Taux d'états dangereux (%)"]
-    env_names = sorted({exp.split("_", 1)[1] for exp in experiments})
+    env_names = sorted({_env_of(exp) for exp in experiments})
 
     for env_name in env_names:
-        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+        # Garde uniquement les métriques avec au moins une valeur non nulle
+        active = [
+            (m, l) for m, l in zip(metrics, labels)
+            if any(
+                np.mean([e[m] for e in data["evaluation"]]) > 0.001
+                for exp_name, data in experiments.items()
+                if _env_of(exp_name) == env_name
+            )
+        ]
+        active_metrics, active_labels = zip(*active)
+
+        fig, axes = plt.subplots(1, len(active_metrics), figsize=(4 * len(active_metrics), 4))
+        if len(active_metrics) == 1:
+            axes = [axes]
         fig.suptitle(f"Évaluation finale — {env_name}", fontsize=12)
 
-        for ax, metric, label in zip(axes, metrics, labels):
+        for ax, metric, label in zip(axes, active_metrics, active_labels):
             algos, means, stds, colors = [], [], [], []
             for exp_name, data in sorted(experiments.items()):
-                if env_name not in exp_name:
+                if _env_of(exp_name) != env_name:
                     continue
-                ak = "qlearning" if "qlearning" in exp_name else "sarsa"
+                ak = next(k for k in ALGO_COLOR if exp_name.startswith(k))
                 vals = np.array([e[metric] for e in data["evaluation"]]) * 100
                 algos.append(ALGO_LABEL[ak])
                 means.append(np.mean(vals))
@@ -217,7 +242,7 @@ def plot_danger_boxplot(experiments, save_dir="figures"):
     Exclut le cas Facile (déterministe, variance nulle, peu informatif)."""
     os.makedirs(save_dir, exist_ok=True)
 
-    env_names  = [e for e in sorted({exp.split("_", 1)[1] for exp in experiments})
+    env_names  = [e for e in sorted({_env_of(exp) for exp in experiments})
                   if e != "easy"]
     env_labels = {"medium": "Moyen", "hard": "Difficile"}
 
@@ -230,7 +255,7 @@ def plot_danger_boxplot(experiments, save_dir="figures"):
 
     for ax, env_name in zip(axes, env_names):
         data, colors, labels = [], [], []
-        for algo in ["qlearning", "sarsa"]:
+        for algo in ALGO_COLOR:
             key = f"{algo}_{env_name}"
             if key not in experiments:
                 continue
@@ -251,7 +276,7 @@ def plot_danger_boxplot(experiments, save_dir="figures"):
             for item in bp[element]:
                 item.set_color(COLORS[3])
 
-        ax.set_xticks([1, 2])
+        ax.set_xticks(range(1, len(labels) + 1))
         ax.set_xticklabels(labels, fontsize=10)
         ax.set_title(env_labels.get(env_name, env_name), fontsize=11)
         ax.set_ylabel("Situations dangereuses / épisode")
@@ -266,9 +291,11 @@ def plot_danger_boxplot(experiments, save_dir="figures"):
 def plot_overview(experiments, save_dir="figures"):
     os.makedirs(save_dir, exist_ok=True)
 
-    env_names  = sorted({exp.split("_", 1)[1] for exp in experiments})
-    algo_names = ["qlearning", "sarsa"]
-    algo_labels = ["Q-learning", "SARSA"]
+    _env_order = ["easy", "medium", "hard"]
+    _all_envs  = {_env_of(exp) for exp in experiments}
+    env_names  = [e for e in _env_order if e in _all_envs] + sorted(_all_envs - set(_env_order))
+    algo_names = list(ALGO_COLOR.keys())
+    algo_labels = [ALGO_LABEL[a] for a in algo_names]
 
     for metric, title, cmap in [
         ("success_rate", "Taux de succès (%)", "Blues"),
@@ -286,7 +313,7 @@ def plot_overview(experiments, save_dir="figures"):
                 matrix[i, j] = np.mean(vals)
                 errs[i, j]   = np.std(vals)
 
-        fig, ax = plt.subplots(figsize=(7, 3))
+        fig, ax = plt.subplots(figsize=(9, 4))
         im = ax.imshow(matrix, cmap=cmap, vmin=0, vmax=100, aspect="auto")
         plt.colorbar(im, ax=ax, label=title)
         ax.set_xticks(range(len(env_names)))
@@ -328,27 +355,27 @@ def plot_policy_arrows(experiments, env_names, save_dir="figures"):
         safe_path = safest_path(env)
         safe_set  = set(safe_path) if safe_path else set()
 
-        ncols_fig = 2
-        # Largeur fixe ≈ \linewidth → rétrécissement minimal dans le PDF
-        fig_w = 7.0
-        fig_h = fig_w / 2.0 * (nrow / ncol) + 0.8
-        cell_size = (fig_w - 1.0) / (2 * ncol)
-        fig, axes = plt.subplots(1, 2, figsize=(fig_w, fig_h))
+        algos_present = [a for a in ALGO_COLOR if f"{a}_{env_name}" in experiments]
+        ncols_fig = len(algos_present)
+        fig_w = max(7.0, 3.5 * ncols_fig)
+        fig_h = fig_w / ncols_fig * (nrow / ncol) + 0.8
+        fig, axes = plt.subplots(1, ncols_fig, figsize=(fig_w, fig_h))
+        if ncols_fig == 1:
+            axes = [axes]
         fig.suptitle(f"Politiques greedy — {env_name}", fontsize=12, fontweight="bold")
 
-        for ax, algo in zip(axes, ["qlearning", "sarsa"]):
+        for ax, algo in zip(axes, algos_present):
             key = f"{algo}_{env_name}"
 
-            # Récupère Q : depuis les résultats si dispo, sinon entraîne un run de secours
             Q_runs = experiments.get(key, {}).get("Q_runs", [])
             if Q_runs:
                 Q_mean = np.mean(Q_runs, axis=0)
             else:
                 print(f"  [policy] Q non trouvé pour {key} — entraînement de secours (seed=42)…")
-                from src.agents import q_learning as _ql, sarsa as _sarsa
-                _fn  = _ql if algo == "qlearning" else _sarsa
+                from src.agents import q_learning as _ql, sarsa as _sarsa, shielded_qlearning as _sq
+                _fns = {"qlearning": _ql, "sarsa": _sarsa, "shielded_qlearning": _sq}
                 _env = make_env(env_name)
-                Q_mean, _ = _fn(_env, gamma=0.99, lr=0.5, episodes=5000, seed=42)
+                Q_mean, _ = _fns[algo](_env, gamma=0.99, lr=0.5, episodes=5000, seed=42)
 
             ax.set_xlim(0, ncol)
             ax.set_ylim(0, nrow)
