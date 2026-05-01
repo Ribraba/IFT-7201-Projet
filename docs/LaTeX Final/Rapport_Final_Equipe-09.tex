@@ -69,7 +69,7 @@
   \item \textbf{Positionnement des situations dangereuses :} regrouper les trous de façon contiguë crée un obstacle de type falaise, forçant l'agent à choisir entre un chemin court risqué et un détour sûr.
 \end{itemize}
 
-Un épisode se termine lorsque l'agent atteint l'objectif \texttt{G}, tombe dans un trou \texttt{H}, ou dépasse 200 pas de temps. La fonction de récompense est mise en forme (\textit{reward shaping}) pour accélérer la propagation du signal de danger sans modifier la politique optimale~\citep{ng1999} : chute ($r = -1{,}0$), objectif ($r = +1{,}0$), collision avec un mur ($r = -0{,}1$), déplacement ordinaire ($r = 0{,}0$).
+Un épisode se termine lorsque l'agent atteint l'objectif \texttt{G}, tombe dans un trou \texttt{H}, ou dépasse 200 pas de temps. La fonction de récompense est mise en forme (\textit{reward shaping}) pour densifier le signal d'apprentissage et rendre les comportements indésirables plus visibles empiriquement~\citep{ng1999} : chute ($r = -1{,}0$), objectif ($r = +1{,}0$), collision avec un mur ($r = -0{,}1$), déplacement ordinaire ($r = 0{,}0$).
 
 \subsection{Cas d'étude}
 
@@ -124,11 +124,11 @@ Puisque $a'$ peut être aléatoire (avec probabilité $\varepsilon$), SARSA int�
 
 Trois travaux en Safe Reinforcement Learning ont été identifiés, chacun proposant un mécanisme distinct d'intégration de la sécurité.
 
-\textbf{Model-based Safe Deep RL via a Constrained Proximal Policy Optimization Algorithm}~\citep{CMDP2022} étend PPO en couplant un modèle de dynamique appris avec une optimisation sous contraintes de coût cumulé (CMDP). L'agent anticipe les conséquences futures avant d'agir, offrant des garanties théoriques solides, mais cette méthode repose fondamentalement sur l'approximation de fonction et l'apprentissage profond, la rendant peu adaptée à un cadre tabulaire.
+Tout d'abord, \textbf{Model-based Safe Deep RL via a Constrained Proximal Policy Optimization Algorithm}~\citep{CMDP2022} étend PPO en couplant un modèle de dynamique appris avec une optimisation sous contraintes de coût cumulé (CMDP). L'agent anticipe les conséquences futures avant d'agir, offrant des garanties théoriques solides, mais cette méthode repose fondamentalement sur l'approximation de fonction et l'apprentissage profond, la rendant peu adaptée à un cadre tabulaire.
 
-\textbf{Safe RL by Imagining the Near Future}~\citep{Future2022} adopte une stratégie prédictive : l'agent apprend un modèle du monde et simule des trajectoires futures avant d'agir pour évaluer le risque à court terme. Cette anticipation évite certaines erreurs a priori, mais le modèle neuronal et la génération de trajectoires imaginées sont difficilement transposables à un cadre où les transitions sont déjà exactement connues.
+Ensuite, \textbf{Safe RL by Imagining the Near Future}~\citep{Future2022} adopte, lui, une stratégie prédictive : l'agent apprend un modèle du monde et simule des trajectoires futures avant d'agir pour évaluer le risque à court terme. Cette anticipation évite certaines erreurs a priori, mais le modèle neuronal et la génération de trajectoires imaginées sont difficilement transposables à un cadre où les transitions sont déjà exactement connues.
 
-\textbf{The Fear Field Framework}~\citep{Fearfield2025} propose un shielding adaptatif pour environnements stochastiques discrets. La méthode maintient dynamiquement une zone tampon autour des états dangereux, appelée \textit{fear field}, dont le rayon s'élargit lors de transitions imprévues et se réduit en l'absence d'incident. Un mécanisme d'exploration adaptative augmente $\varepsilon$ lorsqu'un comportement de boucle est détecté.
+Enfin, \textbf{The Fear Field Framework}~\citep{Fearfield2025} propose un shielding adaptatif pour environnements stochastiques discrets. La méthode maintient dynamiquement une zone tampon autour des états dangereux, appelée \textit{fear field}, dont le rayon s'élargit lors de transitions imprévues et se réduit en l'absence d'incident. Un mécanisme d'exploration adaptative augmente $\varepsilon$ lorsqu'un comportement de boucle est détecté.
 
 Parmi ces trois approches, le \textbf{principe du shielding adaptatif} proposé par Fear Field est retenu comme stratégie principale. C'est l'approche la plus récente (2025), directement appliquée à \texttt{FrozenLake-v1} par ses auteurs~\citep{Fearfield2025}, et la seule adaptable à un cadre tabulaire sans réseau de neurones. Son mécanisme répond précisément au défi central de l'étude : la stochasticité de \texttt{is\_slippery=True}, où les glissades imprévues rendent les politiques naïves vulnérables.
 
@@ -203,12 +203,23 @@ La mise à jour TD demeure identique à Q-learning standard. La différence fond
   \label{fig:overview}
 \end{figure}
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{../../figures/hard_shield_tradeoff.png}
+  \caption{Cas \textbf{Difficile} : effet du shield au déploiement. Le Q-learning blindé est entraîné de manière identique dans les deux cas ; seule la politique d'évaluation change selon que le shield est maintenu ou non à l'inférence. Le shield actif élimine les chutes ($0{,}0\%$) mais transfère une partie de l'échec vers les boucles ($45{,}2\%$).}
+  \label{fig:hard_shield_tradeoff}
+\end{figure}
+
+La Figure~\ref{fig:hard_shield_tradeoff} complète les vues d'ensemble sans les dupliquer : sur \textit{Facile} et \textit{Moyen}, activer le shield à l'inférence ne modifie pratiquement pas les résultats, alors que sur \textit{Difficile} l'effet devient structurel. Avec la même table $Q$, le Q-learning blindé passe de $19{,}9\%$ de succès et $75{,}2\%$ de chutes sans shield à $54{,}8\%$ de succès, $0{,}0\%$ de chutes et $45{,}2\%$ de boucles avec shield. Ce résultat montre que le mécanisme de sécurité n'améliore pas seulement l'exploration ; il modifie aussi le compromis sécurité/performance lorsqu'il reste actif au déploiement.
+
 \begin{table}[H]
   \centering
-  \begin{minipage}[c]{0.62\linewidth}
+  \begin{minipage}[t]{0.62\linewidth}
     \caption{Indicateurs d'évaluation finale (politique greedy sans shield, 500 épisodes, moyenne $\pm$ écart-type, 10 répétitions). Chemin sûr : chevauchement $\geq 50\%$ avec Dijkstra (Difficile uniquement).}
     \label{tab:eval}
+    \centering
     \scriptsize
+    \makebox[\linewidth][c]{%
     \begin{tabular}{llccc}
       \toprule
       & & \textbf{Facile} & \textbf{Moyen} & \textbf{Difficile} \\
@@ -234,9 +245,10 @@ La mise à jour TD demeure identique à Q-learning standard. La différence fond
         & Danger      & $20{,}0\%$             & $28{,}6\%$           & $30{,}4\%$ \\
         & Chemin sûr  & {-}{-}{-}             & {-}{-}{-}            & $68{,}7 \pm 2{,}6\%$ \\
       \bottomrule
-    \end{tabular}
+    \end{tabular}}
   \end{minipage}\hfill
-  \begin{minipage}[c]{0.35\linewidth}
+  \begin{minipage}[t]{0.35\linewidth}
+    \vspace*{2.8cm}
     \small
     Sur Facile et Moyen, les trois stratégies sont équivalentes à l'évaluation. Sur Difficile, le Q-learning blindé obtient seulement $19{,}9\%$ de succès avec $75{,}2\%$ de chutes, bien en dessous de SARSA ($81{,}2\%$) et de Q-learning ($69{,}0\%$). Son taux de boucles ($4{,}9\%$) est pourtant le plus faible ; c'est la politique greedy sans shield qui marche fréquemment vers les trous.
   \end{minipage}
@@ -248,16 +260,20 @@ La mise à jour TD demeure identique à Q-learning standard. La différence fond
   \caption{Politiques greedy sur le cas Difficile (10 répétitions). Le contour vert délimite le chemin Dijkstra. SARSA emprunte systématiquement le détour sûr. Le Q-learning blindé présente des flèches incohérentes dans la zone proche de la barrière, signe d'une table Q mal calibrée sans shield actif.}
   \label{fig:policy_hard}
 \end{figure}
-
+\newpage
 \section{Discussion}
 
-\textbf{Liens avec la littérature :} sur le cas Difficile, SARSA emprunte le détour sûr plus souvent que Q-learning ($70{,}4\%$ contre $60{,}1\%$), confirmant le phénomène du \textit{cliff walking} prédit par la théorie~\citep[chap.~6]{sutton2018} : la mise à jour \textit{on-policy} intègre naturellement le coût de l'exploration dans les estimations de valeur. La réduction des chutes par le shield pendant l'entraînement est cohérente avec le principe Fear Field~\citep{Fearfield2025}. Cependant, l'implémentation originale maintient le shield au déploiement, alors que notre évaluation greedy ne l'applique pas. Cette différence de protocole est à l'origine de la dégradation observée sur le cas Difficile.
+\textbf{Liens avec la littérature :} sur le cas Difficile, SARSA emprunte le détour sûr plus souvent que Q-learning ($70{,}4\%$ contre $60{,}1\%$), confirmant le phénomène du \textit{cliff walking} prédit par la théorie~\citep[chap.~6]{sutton2018} : la mise à jour \textit{on-policy} intègre naturellement le coût de l'exploration dans les estimations de valeur. La réduction des chutes par le shield pendant l'entraînement est cohérente avec le principe Fear Field~\citep{Fearfield2025}. Cependant, l'implémentation originale maintient le shield au déploiement, alors que notre protocole principal l'évalue d'abord en politique greedy sans shield. La Figure~\ref{fig:hard_shield_tradeoff} montre que cette distinction de protocole change qualitativement l'interprétation du résultat sur \textit{Difficile}.
 
-\textbf{Explication des résultats :} sur Facile et Moyen, les trois stratégies convergent vers des politiques équivalentes. Sur Difficile, le problème vient de la contrainte $\mathcal{A}_{\text{safe}}(s)$ : les actions vers les trous n'étant jamais sélectionnées pendant l'entraînement, leurs Q-valeurs restent à leur valeur initiale nulle. À l'évaluation sans shield, ces valeurs nulles deviennent compétitives avec celles des chemins longs qui contournent la barrière, et l'agent tombe dans $75{,}2\%$ des cas. S'ajoute à cela que pour les états proches de la barrière centrale, $\mathcal{A}_{\text{safe}}(s) = \emptyset$ : le shield est désactivé par le repli précisément là où il devrait protéger l'agent, laissant les Q-valeurs de cette zone mal estimées. En résumé, sécuriser l'exploration peut dégrader la politique finale si le shield n'est pas actif au déploiement.
+\textbf{Explication des résultats :} sur \textit{Facile} et \textit{Moyen}, les trois stratégies convergent vers des politiques équivalentes : la topologie reste simple et la politique greedy finale évite déjà les trous, avec ou sans shield au déploiement. Le cas \textit{Difficile} est d'une nature différente. D'abord, la contrainte $\mathcal{A}_{\text{safe}}(s)$ retire de l'exploration les actions qui mèneraient dans un trou avec probabilité non nulle ; leurs Q-valeurs restent donc peu ou pas informées. Ensuite, Q-learning demeure \textit{off-policy} : la mise à jour utilise $\max_{a'} Q(s',a')$, y compris pour des actions rarement ou jamais jouées à cause du masquage. On obtient ainsi une table $Q$ partiellement incohérente près de la barrière centrale, où certaines actions non testées conservent une valeur artificiellement compétitive. Enfin, pour plusieurs états adjacents à la barrière, $\mathcal{A}_{\text{safe}}(s)=\emptyset$ à cause de la stochasticité : le repli autorise alors toutes les actions exactement dans la zone la plus risquée, ce qui détériore encore l'estimation locale. Sans shield à l'évaluation, la politique greedy peut donc sélectionner des actions dont la dangerosité n'a jamais été réellement internalisée, d'où les $75{,}2\%$ de chutes observés.
 
-\textbf{Réflexion :} SARSA offre le meilleur rapport qualité-sécurité sans mécanisme dédié : sa mise à jour \textit{on-policy} produit la meilleure politique finale sur Difficile ($81{,}2\%$ de succès, $25{,}9\%$ de proximité aux trous). Le shield tabulaire est computationnellement léger ($O(|\mathcal{S}| \times |\mathcal{A}|)$ par épisode), mais sa principale limite pratique est la nécessité de connaître $P(s'|s,a)$ exactement. Dans un système réel, cette table devrait être apprise, ce qui introduit des erreurs de modèle. Deux extensions naturelles seraient d'appliquer le shield aussi à l'évaluation, ou de remplacer la contrainte stricte ($p > 0$) par un seuil probabiliste ($p > \theta$) pour réduire la sur-conservativité en environnement stochastique.
+Le comportement \textit{avec} shield au déploiement confirme cette lecture. En maintenant le filtrage à l'inférence, les chutes tombent à $0{,}0\%$, ce qui montre que le mécanisme de sécurité remplit bien son objectif de court terme : empêcher l'entrée dans les états dangereux. En revanche, le taux de boucles monte à $45{,}2\%$ et le succès plafonne à $54{,}8\%$. Le shield ne corrige donc pas la qualité de la table $Q$ ; il transforme une partie des échecs par chute en échecs par incapacité à progresser. Autrement dit, le modèle tabulaire blindé obtenu ici garantit mieux la sécurité \emph{pas à pas}, mais pas l'efficacité globale de la navigation.
 
-\textbf{Message général au client :} réduire les situations dangereuses pendant l'apprentissage est atteint par les trois stratégies — aucune chute n'apparaît à la politique finale sur Facile et Moyen. Sur l'environnement le plus difficile, le Q-learning blindé simplifié montre ses limites avec $75{,}2\%$ de chutes à l'évaluation greedy. La recommandation est d'utiliser \textbf{SARSA} comme base pour les environnements stochastiques à obstacles groupés, et de combiner cette approche avec un shield maintenu au déploiement si des garanties de sécurité formelles sont nécessaires à chaque pas de décision.
+\textbf{Réflexion :} SARSA offre le meilleur rapport qualité-sécurité sans mécanisme dédié : sa mise à jour \textit{on-policy} produit la meilleure politique finale sur \textit{Difficile} ($81{,}2\%$ de succès, $25{,}9\%$ de proximité aux trous) parce qu'elle internalise naturellement le coût de l'exploration. Le shield tabulaire, lui, est computationnellement léger et très efficace pour interdire immédiatement les transitions dangereuses, mais il introduit une tension structurelle entre \emph{sûreté locale} et \emph{progrès global}. Plus le filtrage est conservateur dans un environnement glissant, plus il protège contre les trous ; mais plus il risque aussi d'enfermer l'agent dans des comportements prudents mais improductifs. Cette tension explique pourquoi la version \emph{avec shield} réduit les chutes à zéro sans rattraper les performances de SARSA.
+
+D'un point de vue pratique, cette expérience souligne aussi une limite importante de notre simplification : le shield repose ici sur la table exacte $P(s'|s,a)$ fournie par Gymnasium. Dans un système réel, cette connaissance devrait être apprise ou approximée ; les erreurs de modèle déplaceraient encore le compromis observé. Deux prolongements naturels seraient donc (1) de maintenir explicitement le shield au déploiement lorsqu'une garantie de sûreté prime sur le taux de succès, et (2) de remplacer la contrainte stricte ($p>0$) par un seuil probabiliste ($p>\theta$) afin de réduire la sur-conservativité dans les zones où la glissade rend toute action localement risquée.
+
+\textbf{Message général au client :} réduire les situations dangereuses pendant l'apprentissage est atteint par les trois stratégies sur les cas simples, mais l'environnement \textit{Difficile} révèle qu'il faut distinguer \emph{apprendre prudemment} de \emph{agir sûrement au déploiement}. Le Q-learning blindé simplifié n'est pas une meilleure politique finale en soi : sans shield à l'inférence, il chute massivement ; avec shield, il devient sûr mais plus souvent bloqué. La recommandation est donc d'utiliser \textbf{SARSA} comme base robuste pour des environnements stochastiques à obstacles groupés, et de réserver un shield maintenu au déploiement aux contextes où l'élimination des chutes est prioritaire même au prix d'un plus grand nombre de boucles.
 
 \newpage
 \bibliographystyle{unsrtnat}

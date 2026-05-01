@@ -39,6 +39,14 @@ def run_single(exp, run_id):
     if "hard" in exp["env"]:
         eval_result["safe_path_rate"] = evaluate_safe_path_rate(env, Q, n_episodes=500)
 
+    eval_result_with_shield = None
+    if exp["algo"] == "shielded_qlearning":
+        eval_result_with_shield = evaluate_agent(env, Q, n_episodes=500, apply_shield=True)
+        if "hard" in exp["env"]:
+            eval_result_with_shield["safe_path_rate"] = evaluate_safe_path_rate(
+                env, Q, n_episodes=500, apply_shield=True
+            )
+
     return {
         "experiment":  exp["name"],
         "algo":        exp["algo"],
@@ -50,6 +58,7 @@ def run_single(exp, run_id):
                          "eps_min", "eps_decay", "lr_min", "lr_decay"]},
         "training":    history,
         "evaluation":  eval_result,
+        "evaluation_with_shield": eval_result_with_shield,
         "Q":           Q.tolist(),
     }
 

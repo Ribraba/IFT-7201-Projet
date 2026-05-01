@@ -38,7 +38,7 @@ def _fell(env, state):
 def q_learning(env, gamma, lr, episodes, seed=0,
                eps_start=1.0, eps_min=0.05, eps_decay=0.9995,
                lr_min=0.01, lr_decay=0.9995):
-
+    """Q-learning tabulaire (off-policy)."""
     np.random.seed(seed)
     random.seed(seed)
 
@@ -82,15 +82,7 @@ def q_learning(env, gamma, lr, episodes, seed=0,
 def shielded_qlearning(env, gamma, lr, episodes, seed=0,
                        eps_start=1.0, eps_min=0.05, eps_decay=0.9995,
                        lr_min=0.01, lr_decay=0.9995):
-    """Q-learning avec shield statique.
-
-    Inspiré de : Odriozola-Olalde et al. (2025), Fear Field framework.
-    Simplification pour environnements stationnaires : le shield est construit
-    directement depuis la table de transitions P (modèle exact connu),
-    sans réseau de neurones ni adaptation temporelle.
-    À chaque pas, les actions menant dans un trou avec probabilité > 0
-    sont masquées avant la sélection epsilon-greedy.
-    """
+    """Q-learning avec shield statique."""
     np.random.seed(seed)
     random.seed(seed)
 
@@ -144,6 +136,7 @@ def shielded_qlearning(env, gamma, lr, episodes, seed=0,
 def sarsa(env, gamma, lr, episodes, seed=0,
           eps_start=1.0, eps_min=0.05, eps_decay=0.9995,
           lr_min=0.01, lr_decay=0.9995):
+    """SARSA tabulaire (on-policy)."""
 
     np.random.seed(seed)
     random.seed(seed)

@@ -87,18 +87,21 @@ def load_results(results_dir):
         if not json_files:
             continue
 
-        training_runs, eval_runs, Q_runs = [], [], []
+        training_runs, eval_runs, eval_shield_runs, Q_runs = [], [], [], []
         for jf in json_files:
             with open(jf) as f:
                 data = json.load(f)
             training_runs.append(data["training"])
             eval_runs.append(data["evaluation"])
+            if data.get("evaluation_with_shield") is not None:
+                eval_shield_runs.append(data["evaluation_with_shield"])
             if "Q" in data:
                 Q_runs.append(np.array(data["Q"]))
 
         experiments[exp_name] = {
             "training":  training_runs,
             "evaluation": eval_runs,
+            "evaluation_with_shield": eval_shield_runs,
             "Q_runs":    Q_runs,   # liste vide si pas encore disponible
         }
         print(f"  {exp_name}  ({len(json_files)} runs, Q={'oui' if Q_runs else 'non'})")
@@ -333,6 +336,71 @@ def plot_overview(experiments, save_dir="figures"):
         plt.savefig(path, dpi=150)
         plt.close()
         print(f"Sauvegardé : {path}")
+
+
+def plot_hard_shield_tradeoff(experiments, save_dir="figures"):
+    """Compare le cas Difficile avec et sans shield au déploiement.
+
+    Figure volontairement ciblée pour éviter la redite avec les vues d'ensemble:
+    elle ne montre que le compromis succès/chutes/boucles sur `hard`.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    key_order = [
+        ("qlearning_hard", "evaluation", "Q-learning"),
+        ("sarsa_hard", "evaluation", "SARSA"),
+        ("shielded_qlearning_hard", "evaluation", "Q-l. blindé\nsans\nshield"),
+        ("shielded_qlearning_hard", "evaluation_with_shield", "Q-l. blindé\navec\nshield"),
+    ]
+    metric_specs = [
+        ("success_rate", "Taux de succès (%)"),
+        ("fall_rate", "Taux de chutes (%)"),
+        ("timeout_rate", "Taux de boucles (%)"),
+    ]
+
+    colors = [
+        ALGO_COLOR["qlearning"],
+        ALGO_COLOR["sarsa"],
+        ALGO_COLOR["shielded_qlearning"],
+        COLORS[5],
+    ]
+
+    fig, axes = plt.subplots(1, len(metric_specs), figsize=(12.2, 4.6), sharey=False)
+    fig.suptitle("Cas Difficile — effet du shield au déploiement",
+                 fontsize=12, fontweight="bold")
+
+    for ax, (metric, ylabel) in zip(axes, metric_specs):
+        labels, means, stds = [], [], []
+
+        for exp_name, eval_key, label in key_order:
+            data = experiments.get(exp_name, {}).get(eval_key, [])
+            if not data:
+                continue
+
+            vals = np.array([e[metric] for e in data]) * 100
+            labels.append(label)
+            means.append(np.mean(vals))
+            stds.append(np.std(vals))
+
+        x = np.arange(len(labels))
+        bars = ax.bar(x, means, yerr=stds, capsize=8, color=colors[:len(labels)],
+                      alpha=0.84, width=0.55, error_kw={"ecolor": COLORS[3]})
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, fontsize=8.5)
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(0, 115)
+        ax.yaxis.set_major_formatter(mticker.PercentFormatter())
+
+        for bar, mean in zip(bars, means):
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2,
+                    f"{mean:.1f}%", ha="center", va="bottom",
+                    fontsize=9, fontweight="bold")
+
+    fig.subplots_adjust(wspace=0.34, bottom=0.22)
+    path = os.path.join(save_dir, "hard_shield_tradeoff.png")
+    plt.savefig(path, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"Sauvegardé : {path}")
 
 
 def plot_policy_arrows(experiments, env_names, save_dir="figures"):

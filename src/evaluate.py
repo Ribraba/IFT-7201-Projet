@@ -17,9 +17,37 @@ def is_dangerous(desc, row, col):
     return False
 
 
-def evaluate_agent(env, Q, n_episodes=500, max_steps=200):
+def _get_holes(env):
+    return {
+        r * env.ncol + c
+        for r in range(env.nrow)
+        for c in range(env.ncol)
+        if env.desc[r][c].decode("utf-8") == "H"
+    }
+
+
+def _safe_actions(env, state, holes):
+    n_actions = env.action_space.n
+    safe = [
+        a for a in range(n_actions)
+        if all(ns not in holes for (_, ns, _, _) in env.unwrapped.P[state][a])
+    ]
+    return safe if safe else list(range(n_actions))
+
+
+def _greedy_action(Q, state, allowed_actions=None):
+    if allowed_actions is None:
+        return int(np.argmax(Q[state]))
+
+    masked = np.full(Q.shape[1], -np.inf)
+    masked[allowed_actions] = Q[state, allowed_actions]
+    return int(np.argmax(masked))
+
+
+def evaluate_agent(env, Q, n_episodes=500, max_steps=200, apply_shield=False):
     ncol = env.ncol
     desc = env.desc
+    holes = _get_holes(env) if apply_shield else None
 
     successes, falls = 0, 0
     total_steps, total_danger_steps = 0, 0
@@ -31,7 +59,8 @@ def evaluate_agent(env, Q, n_episodes=500, max_steps=200):
         ep_danger = 0
 
         for _ in range(max_steps):
-            action = int(np.argmax(Q[state]))
+            safe_actions = _safe_actions(env, state, holes) if apply_shield else None
+            action = _greedy_action(Q, state, safe_actions)
             next_state, _, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
 
@@ -118,7 +147,8 @@ def safest_path(env, danger_penalty=3):
     return best_path
 
 
-def evaluate_safe_path_rate(env, Q, n_episodes=500, max_steps=200, tolerance=0.5):
+def evaluate_safe_path_rate(env, Q, n_episodes=500, max_steps=200, tolerance=0.5,
+                            apply_shield=False):
     """Fraction des épisodes réussis dont la trajectoire chevauche le chemin Dijkstra
     à au moins `tolerance` (défaut 50 %)."""
     safe_path = safest_path(env)
@@ -128,6 +158,7 @@ def evaluate_safe_path_rate(env, Q, n_episodes=500, max_steps=200, tolerance=0.5
 
     ncol = env.ncol
     desc = env.desc
+    holes = _get_holes(env) if apply_shield else None
     safe_count    = 0
     total_success = 0
 
@@ -136,7 +167,8 @@ def evaluate_safe_path_rate(env, Q, n_episodes=500, max_steps=200, tolerance=0.5
         path = [state]
 
         for _ in range(max_steps):
-            action = int(np.argmax(Q[state]))
+            safe_actions = _safe_actions(env, state, holes) if apply_shield else None
+            action = _greedy_action(Q, state, safe_actions)
             next_state, _, terminated, truncated, _ = env.step(action)
             path.append(next_state)
 
